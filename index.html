@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>프롬프트 서랍</title>
-<link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#1a1815">
-<link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./config.js"></script>
+<script>
+  // ── Supabase 연결 설정 (대시보드 → Project Settings → API) ──
+  window.SUPABASE_URL = "https://dpjnvtmymwnqclkjmejb.supabase.co";
+  window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwam52dG15bXducWNsa2ptZWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNzc2MDcsImV4cCI6MjA5Nzg1MzYwN30.DMmMmxgnAZceaqSgPfsIZ1ZSk8Ih7lbaDtmQnoLT4as";
+</script>
 <style>
   :root{
     --bg:#1a1815;--raise:#252220;--raise-2:#2e2a26;--line:#393430;--line-soft:#312d29;
@@ -217,7 +219,7 @@
 (function(){
   "use strict";
 
-  /* ---------- Supabase 연결 (config.js 값) ---------- */
+  /* ---------- Supabase 연결 ---------- */
   const SB_URL=(window.SUPABASE_URL||"").trim(), SB_KEY=(window.SUPABASE_ANON_KEY||"").trim();
   const CONFIGURED = SB_URL && SB_KEY && SB_URL.indexOf("YOUR-PROJECT")===-1 && SB_KEY.indexOf("YOUR-ANON")===-1;
   let sb=null;
@@ -304,7 +306,7 @@
     cloudEl.hidden=true;statusEl.hidden=false;
     statusEl.className="status "+(kind==="demo"?"demo":"error");
     statusEl.textContent =
-      kind==="demo"  ? "로컬 모드 · config.js에 Supabase 키를 넣으면 클라우드에 저장돼요" :
+      kind==="demo"  ? "로컬 모드 · Supabase 키를 넣으면 클라우드에 저장돼요" :
       kind==="liberr"? "Supabase 라이브러리를 못 불러왔어요 · 로컬로 동작 중" :
                        "연결 오류 · 로컬에 저장된 내용만 표시 중";
   }
@@ -514,11 +516,13 @@
 })();
 </script>
 <script>
-/* PWA: 오프라인 + 저장 영속성 (http/https에서만) */
+/* 예전 서비스워커/캐시 제거 (옛날 config 캐시 때문에 연결 안 되던 문제 해결) */
 (function(){
-  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-  if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
-    window.addEventListener("load",function(){ navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }).catch(function(){});
+  }
+  if(window.caches && caches.keys){
+    caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); }).catch(function(){});
   }
 })();
 </script>
