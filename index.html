@@ -52,14 +52,6 @@
   }
   .panel{width:380px;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
 
-  .bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(var(--bar-top),var(--bar-bot));
-    border-bottom:1px solid var(--line-soft);box-shadow:inset 0 1px 0 rgba(255,255,255,.025);user-select:none}
-  .bar .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
-  .bar .name{font-size:12.5px;font-weight:650;letter-spacing:.2px}
-  .bar .cloud{margin-left:auto;color:var(--tx-dim);display:flex;align-items:center;gap:4px;font-size:10px}
-  .bar .cloud svg{width:12px;height:12px}
-  .bar .cloud.ok{color:#7fa86b}
-
   .status{font-size:10.5px;font-weight:600;text-align:center;padding:6px 10px;border-bottom:1px solid var(--line-soft);line-height:1.4}
   .status.demo{color:#cf935f;background:rgba(194,86,11,.08)}
   .status.error{color:#e08a6a;background:rgba(180,60,40,.1)}
@@ -236,6 +228,30 @@
   .eval-run:hover{background:var(--accent-bright);border-color:var(--accent-bright)}
   .eval-note{margin-top:11px;font-size:11px;line-height:1.6;color:var(--tx-dim);text-align:center;
     border:1px dashed var(--line-soft);border-radius:var(--radius);padding:12px 14px}
+  .eval-models{display:flex;gap:5px;margin:11px 0 12px}
+  .mchip{appearance:none;font:inherit;font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--raise);
+    color:var(--tx-mut);border-radius:999px;padding:5px 13px;cursor:pointer;transition:.13s}
+  .mchip:hover{color:var(--tx);border-color:var(--btn-hover-line)}
+  .mchip[aria-pressed="true"]{background:var(--accent-tint);border-color:var(--accent);color:var(--accent-soft)}
+  .score{display:flex;align-items:center;gap:14px;padding:13px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--raise)}
+  .ring{width:64px;height:64px;flex:none;border-radius:50%;display:grid;place-items:center;position:relative}
+  .ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--raise)}
+  .ring span{position:relative;font-size:20px;font-weight:800}
+  .ring span small{font-size:10px;color:var(--tx-dim);font-weight:600;margin-left:1px}
+  .crit{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .crit .c{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--tx-mut)}
+  .crit .c .nm{width:58px;flex:none;font-weight:600}
+  .crit .c .bar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+  .crit .c .bar i{display:block;height:100%;border-radius:3px;background:var(--accent);transition:width .3s ease}
+  .mnote{margin:11px 0 6px;font-size:10.5px;line-height:1.5;color:var(--tx-dim)}
+  .fb{display:flex;flex-direction:column;gap:4px}
+  .fb .f{display:flex;gap:7px;font-size:11px;line-height:1.5;padding:2px 0}
+  .fb .f .ic{flex:none;width:14px;text-align:center;font-weight:800}
+  .fb .f.good .ic{color:#7fa86b}
+  .fb .f.tip .ic{color:var(--accent-soft)}
+  .fb .f .tx{color:var(--tx-mut)}
+  .eval-empty{margin-top:4px;font-size:11px;line-height:1.6;color:var(--tx-dim);text-align:center;
+    border:1px dashed var(--line-soft);border-radius:var(--radius);padding:14px}
 
   /* ── 참고 사이트 뷰 ── */
   .ref-view{padding:13px}
@@ -315,10 +331,10 @@
 
     <!-- ───────── 평가 ───────── -->
     <section class="view eval-view" data-view="eval" role="tabpanel" hidden>
-      <div class="eval-head">프롬프트 평가</div>
-      <textarea id="evalInput" class="eval-input" placeholder="평가받을 프롬프트를 붙여넣어 주세요" rows="4"></textarea>
-      <button class="eval-run" id="evalRun" type="button">평가하기</button>
-      <div class="eval-note">좋은 프롬프트 기준을 준비하고 있어요. 곧 점수와 항목별 피드백을 보여드릴게요.</div>
+      <div class="eval-head">프롬프트 평가 · Seedream</div>
+      <textarea id="evalInput" class="eval-input" placeholder="서랍에서 단어를 조합하면 자동으로 들어와요 · 직접 붙여넣어도 됩니다" rows="3"></textarea>
+      <div class="eval-models" id="evalModels"></div>
+      <div class="eval-result" id="evalResult"></div>
     </section>
 
     <!-- ───────── 참고 사이트 ───────── -->
@@ -782,16 +798,15 @@
       const v=b.dataset.tab;
       tabs.forEach(x=>{const on=x===b;x.classList.toggle("active",on);x.setAttribute("aria-selected",on?"true":"false");});
       views.forEach(el=>{const on=el.dataset.view===v;el.classList.toggle("show",on);el.hidden=!on;});
+      if(v==="eval"){ syncEvalFromCompose(); runEval(); }
     }));
   })();
 
   /* ---------- 참고 사이트 ---------- */
   const REF_SITES=[
-    {fav:"🎨",nm:"PromptHero",ds:"이미지 프롬프트 검색·갤러리",url:"https://prompthero.com"},
-    {fav:"🔍",nm:"Lexica",ds:"Stable Diffusion 프롬프트 탐색",url:"https://lexica.art"},
-    {fav:"🧩",nm:"Civitai",ds:"모델·프롬프트 공유 커뮤니티",url:"https://civitai.com"},
-    {fav:"📚",nm:"Prompting Guide",ds:"프롬프트 엔지니어링 가이드",url:"https://www.promptingguide.ai"},
-    {fav:"🧠",nm:"Anthropic Prompt Library",ds:"검증된 프롬프트 예시 모음",url:"https://docs.anthropic.com/en/resources/prompt-library/library"}
+    {fav:"🖼️",nm:"Carat",ds:"이미지 프롬프트 갤러리",url:"https://carat.im/prompt-gallery"},
+    {fav:"🔍",nm:"Lexica",ds:"이미지 프롬프트 검색",url:"https://lexica.art/"},
+    {fav:"✨",nm:"YouMind",ds:"이미지 프롬프트 모음",url:"https://youmind.com/ko-KR/prompts/image"}
   ];
   (function(){
     const wrap=$("#refLinks");if(!wrap)return;
@@ -806,11 +821,130 @@
     });
   })();
 
-  /* ---------- 평가 (기준 준비 중) ---------- */
-  (function(){
-    const run=$("#evalRun");if(!run)return;
-    run.addEventListener("click",()=>toast("평가 기능은 곧 추가됩니다 · 기준 반영 예정"));
-  })();
+  /* ---------- 평가 (Seedream 기준) ---------- */
+  const evalInput=$("#evalInput"), evalModelsEl=$("#evalModels"), evalResultEl=$("#evalResult");
+  const EVAL_MODELS=[{id:"4.0",label:"4.0"},{id:"4.5",label:"4.5"},{id:"5.0",label:"5.0 Lite"}];
+  let evalModel="4.0";
+
+  function composedPrompt(){ return compose.map(c=>c.en).join(", "); }
+  function syncEvalFromCompose(){ if(evalInput) evalInput.value=composedPrompt(); }
+  function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+  function evaluatePrompt(raw, model){
+    const text=String(raw||"").trim();
+    const t=text.toLowerCase();
+    const words=text.split(/\s+/).filter(Boolean);
+    const wc=words.length;
+    const hasAny=arr=>arr.some(k=>t.includes(k));
+
+    const ACTION=["running","walking","standing","sitting","holding","posing","jumping","dancing","looking","smiling","leaning","kneeling","floating","flying","reaching","gazing","reading","writing","drinking","playing","riding","crossing","wearing","staring","resting"];
+    const SETTING=["background","backdrop","in a ","in an ","on a ","on an ","at a ","at the ","against","behind","lobby","office","studio","beach","field","room","street","city","forest","indoor","outdoor","environment","scene","landscape","mountain","sky","cafe","restaurant","desert","ocean"," sea ","window","wall","floor","park","garden","interior","rooftop","kitchen","stage","table"];
+    const STYLE=["photography","photo ","cinematic","cinematography","illustration","painting","render","anime","cartoon","editorial","portrait","flat design","watercolor","oil ","sketch"," style","aesthetic","realistic","photorealistic","minimalist","vintage","lifestyle","comic","concept art","pixel art"];
+    const TECH_KW=["sharp focus","depth of field","bokeh","lighting","studio light","natural light","golden hour","cinematic lighting","high detail","ultra detailed","ultra-detailed","macro","hdr","soft light"];
+    const reRes=/\b[1248]\s?k\b|\bresolution\b/i;
+    const reLens=/\b\d{2,3}\s?mm\b/i;
+    const reAspect=/\b\d{1,2}:\d{1,2}\b/;
+    const reArticleNoun=/\b(a|an|the)\s+[a-z][a-z-]+/i;
+    const reQuoted=/["“][^"”]{2,}["”]/;
+
+    const gerund=/\b[a-z]{3,}ing\b/.test(t);
+    const subjectHit=reArticleNoun.test(text)||/^[A-Z][a-z]+/.test(text);
+    const actionHit=hasAny(ACTION)||(gerund && !/^(lighting|painting)$/.test(t));
+    const settingHit=hasAny(SETTING);
+    const styleHit=hasAny(STYLE);
+    const techHit=reRes.test(text)||reLens.test(text)||reAspect.test(text)||hasAny(TECH_KW);
+
+    const sc=v=>v?1:0.18;
+    const scores={
+      subject: subjectHit?1:(wc>=4?0.5:0.2),
+      action: sc(actionHit),
+      setting: sc(settingHit),
+      style: sc(styleHit),
+      tech: sc(techHit)
+    };
+    let base=(scores.subject+scores.action+scores.setting+scores.style+scores.tech)/5*100;
+
+    const good=[], tips=[];
+    if(subjectHit) good.push("주제가 분명해요"); else tips.push("핵심 주제를 명확히 적어주세요 (예: a golden retriever puppy)");
+    if(actionHit) good.push("동작·자세가 들어갔어요"); else tips.push("동작·자세를 더하면 정적인 기본 포즈를 피할 수 있어요 (예: running across a field)");
+    if(settingHit) good.push("배경·환경이 묘사됐어요"); else tips.push("배경·환경을 넣으면 구성이 좋아져요 (예: in a modern office lobby)");
+    if(styleHit) good.push("스타일이 지정됐어요"); else tips.push("스타일을 지정하세요 (예: editorial photography, cinematic)");
+    if(techHit) good.push("기술 사양이 있어요"); else tips.push("기술 사양을 넣으세요 (예: 4K, sharp focus, studio lighting)");
+
+    let penalty=0;
+    if(/\b(a |an )?(picture|photo|image) of\b/.test(t) && wc<=7){ penalty+=22; tips.push("‘…의 사진’ 같은 모호한 요청은 결과가 예측 불가해져요. 구체적으로 묘사하세요"); }
+    if(wc<5){ penalty+=18; tips.push("요소가 너무 적어요. 주제·배경·스타일을 더해주세요"); }
+    if(/\b(pretty|nice|beautiful|cute|cool|amazing|good)\b/.test(t) && wc<=8){ penalty+=8; }
+    const conflictStyles=["cinematic","watercolor","pixel art","anime","oil painting","3d render","cartoon","flat illustration","comic"];
+    const cs=conflictStyles.filter(s=>t.includes(s)).length;
+    if(cs>=3){ penalty+=14; tips.push("스타일을 여러 개 섞지 마세요. 생성마다 한 가지 스타일을 고르세요"); }
+    if(t.includes("minimalist") && /\b(ornate|detailed|intricate|busy|decorative)\b/.test(t)){ penalty+=10; tips.push("‘미니멀 + 장식 요소가 많은’처럼 모순된 지시를 피하세요"); }
+    const negs=(t.match(/\bno\s+\w+/g)||[]).length + (t.match(/\bwithout\b/g)||[]).length;
+    const posCount=[subjectHit,actionHit,settingHit,styleHit,techHit].filter(Boolean).length;
+    if(negs>=2 && posCount<=2){ penalty+=14; tips.push("원하지 않는 것 대신 원하는 것을 긍정적으로 묘사하세요"); }
+    if(/\b(high\s?res(olution)?|hi-?res|hd)\b/.test(t) && !/\b[1248]\s?k\b/i.test(text)){ penalty+=8; tips.push("‘고해상도’ 대신 1K·2K·4K처럼 정확한 값을 쓰세요"); }
+
+    let LONG=50, modelNote="";
+    if(model==="4.0"){
+      LONG=45; modelNote="4.0은 명확·간결한 설명에 강해요. 핵심 3~5요소에 집중하세요.";
+      if(wc<=35 && base>=70){ base+=4; good.push("간결해서 4.0에 적합해요"); }
+      if(!/\b[1248]\s?k\b/i.test(text)) tips.push("4.0: 해상도를 명시하세요 (1K · 2K · 4K)");
+    } else if(model==="4.5"){
+      LONG=58; modelNote="4.5는 편집·텍스트 렌더링에 강해요.";
+      if(reQuoted.test(text)){ base+=8; good.push("따옴표 텍스트가 있어 텍스트 렌더링에 적합해요"); }
+      else tips.push("4.5: 이미지에 글자를 넣으려면 정확한 텍스트를 \"따옴표\"로 감싸세요 (3~5단어)");
+    } else {
+      LONG=110; modelNote="5.0 Lite는 심층 추론이 가능해 더 풍부한 지침이 유리해요.";
+      const logic=["relationship","between","leads to","flow","because","then","infographic","diagram","process","cause","connecting"];
+      if(logic.some(k=>t.includes(k))){ base+=8; good.push("논리적 관계 설명이 있어 5.0 Lite에 잘 맞아요"); }
+      else tips.push("5.0 Lite: 시각 요소뿐 아니라 논리적 관계도 설명해보세요");
+      if(/\b(chart|data|statistics|revenue|compare|20\d\d|sales)\b/.test(t)) tips.push("실제 데이터·시사 내용이면 web_search 활성화를 고려하세요");
+    }
+    if(wc>LONG){ penalty+=Math.min(18,Math.round((wc-LONG)/4)); tips.push("프롬프트가 너무 길어요. 가장 중요한 3~5요소로 줄이세요"); }
+
+    const total=Math.max(0,Math.min(100,Math.round(base-penalty)));
+    return {total, scores, good:good.slice(0,6), tips:tips.slice(0,5), modelNote};
+  }
+
+  function ringColor(s){ return s>=80?"#7fa86b":(s>=60?"var(--accent-bright)":(s>=40?"#cf935f":"#e08a6a")); }
+
+  function runEval(){
+    if(!evalResultEl) return;
+    const text=(evalInput.value||"").trim();
+    if(!text){
+      evalResultEl.innerHTML='<div class="eval-empty">서랍 탭에서 단어를 조합하면 여기서 자동으로 평가돼요.<br>또는 위 칸에 직접 프롬프트를 붙여넣어 보세요.</div>';
+      return;
+    }
+    const r=evaluatePrompt(text, evalModel), col=ringColor(r.total);
+    const critRows=[["주제",r.scores.subject],["동작·자세",r.scores.action],["환경·배경",r.scores.setting],["스타일",r.scores.style],["기술 사양",r.scores.tech]]
+      .map(([nm,v])=>`<div class="c"><span class="nm">${nm}</span><span class="bar"><i style="width:${Math.round(v*100)}%"></i></span></div>`).join("");
+    const fb=[
+      ...r.good.map(g=>`<div class="f good"><span class="ic">✓</span><span class="tx">${esc(g)}</span></div>`),
+      ...r.tips.map(tp=>`<div class="f tip"><span class="ic">→</span><span class="tx">${esc(tp)}</span></div>`)
+    ].join("");
+    evalResultEl.innerHTML=
+      '<div class="score">'+
+        '<div class="ring" style="background:conic-gradient('+col+' 0 '+r.total+'%, var(--line) '+r.total+'% 100%)">'+
+          '<span style="color:'+col+'">'+r.total+'<small>점</small></span>'+
+        '</div>'+
+        '<div class="crit">'+critRows+'</div>'+
+      '</div>'+
+      '<div class="mnote">'+esc(r.modelNote)+'</div>'+
+      '<div class="fb">'+fb+'</div>';
+  }
+
+  function renderEvalModels(){
+    if(!evalModelsEl) return;
+    evalModelsEl.innerHTML="";
+    EVAL_MODELS.forEach(m=>{
+      const b=document.createElement("button");b.type="button";b.className="mchip";
+      b.setAttribute("aria-pressed",m.id===evalModel?"true":"false");b.textContent=m.label;
+      b.addEventListener("click",()=>{evalModel=m.id;renderEvalModels();runEval();});
+      evalModelsEl.appendChild(b);
+    });
+  }
+  if(evalInput) evalInput.addEventListener("input",runEval);
+  renderEvalModels();
 
   /* ---------- 시작 ---------- */
   (async function init(){

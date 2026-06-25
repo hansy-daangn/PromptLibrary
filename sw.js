@@ -1,5 +1,5 @@
 /* 프롬프트 서랍 - 오프라인 캐시 (앱 셸) */
-const CACHE = "prompt-drawer-v3";
+const CACHE = "prompt-drawer-v4";
 // config.js 는 일부러 미리 캐시하지 않습니다 (연결 키가 바뀌면 즉시 반영되어야 함)
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest",
