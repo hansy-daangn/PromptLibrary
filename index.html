@@ -782,7 +782,21 @@
   }
   // Supabase Edge Function(LLM 프록시)에 미사전 단어 번역 요청
   const TRANSLATE_FN=(window.TRANSLATE_FN||"translate");
+  const TRANSLATE_URL=(window.TRANSLATE_URL||"");
+  const TRANSLATE_KEY=(window.TRANSLATE_KEY||"");
   async function aiTranslate(words){
+    // 별도 번역 엔드포인트가 지정되면 그쪽으로 직접 호출(단어 DB와 다른 프로젝트의 함수 사용)
+    if(TRANSLATE_URL){
+      const res=await fetch(TRANSLATE_URL,{
+        method:"POST",
+        headers:Object.assign({"content-type":"application/json"},
+          TRANSLATE_KEY?{"authorization":"Bearer "+TRANSLATE_KEY,"apikey":TRANSLATE_KEY}:{}),
+        body:JSON.stringify({ words })
+      });
+      if(!res.ok) throw new Error("AI 번역 실패 "+res.status);
+      const data=await res.json();
+      return (data && data.translations) || {};
+    }
     if(!sb || !sb.functions) throw new Error("AI 번역 미설정");
     const { data, error } = await sb.functions.invoke(TRANSLATE_FN, { body:{ words } });
     if(error) throw error;
