@@ -4,12 +4,16 @@
 //  영어 이미지-프롬프트 키워드를 한국어로 번역해 돌려줍니다.
 //  API 키는 서버(Supabase secret)에만 두고 브라우저에는 노출하지 않습니다.
 //
-//  배포:
-//    supabase functions deploy translate --no-verify-jwt
-//  키 설정(둘 중 하나):
+//  배포 (레포 루트에서, Supabase CLI 필요):
+//    supabase login
+//    supabase link --project-ref dpjnvtmymwnqclkjmejb
+//    supabase functions deploy translate
+//  Claude API 키 설정(서버 시크릿):
 //    supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 //  호출(브라우저): sb.functions.invoke("translate", { body: { words: [...] } })
 //  응답: { translations: { "<영어원문>": "<한국어>" , ... } }
+//
+//  참고: 기본 verify_jwt=true 로 배포해도 사이트가 anon 키로 호출하므로 통과됩니다.
 // ============================================================
 
 const cors = {
