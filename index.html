@@ -211,7 +211,8 @@
     padding:4px 5px 4px 9px;font-size:12px;color:var(--tx);transition:border-color .12s,background .12s}
   .ctok:hover{border-color:var(--accent);background:var(--accent-tint)}
   .ctok .x{appearance:none;border:0;background:none;color:var(--tx-dim);cursor:pointer;width:16px;height:16px;border-radius:50%;
-    display:grid;place-items:center;font-size:13px;line-height:1;opacity:0;transition:opacity .12s,background .12s,color .12s}
+    display:grid;place-items:center;padding:0;opacity:0;transition:opacity .12s,background .12s,color .12s}
+  .ctok .x svg{width:9px;height:9px;display:block}
   .ctok:hover .x{opacity:1}
   .ctok .x:hover{background:var(--accent);color:#fff}
   @media (hover:none){.ctok .x{opacity:.55}}
@@ -228,7 +229,7 @@
   .eval-run:hover{background:var(--accent-bright);border-color:var(--accent-bright)}
   .eval-note{margin-top:11px;font-size:11px;line-height:1.6;color:var(--tx-dim);text-align:center;
     border:1px dashed var(--line-soft);border-radius:var(--radius);padding:12px 14px}
-  .eval-models{display:flex;gap:5px;margin:11px 0 12px}
+  .eval-models{display:flex;flex-wrap:wrap;gap:5px;margin:11px 0 12px}
   .mchip{appearance:none;font:inherit;font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--raise);
     color:var(--tx-mut);border-radius:999px;padding:5px 13px;cursor:pointer;transition:.13s}
   .mchip:hover{color:var(--tx);border-color:var(--btn-hover-line)}
@@ -239,11 +240,12 @@
   .ring span{position:relative;font-size:20px;font-weight:800}
   .ring span small{font-size:10px;color:var(--tx-dim);font-weight:600;margin-left:1px}
   .crit{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
-  .crit .c{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--tx-mut)}
-  .crit .c .nm{width:58px;flex:none;font-weight:600}
+  .crit .c{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--tx-mut)}
+  .crit .c .nm{width:84px;flex:none;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crit .c .bar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
   .crit .c .bar i{display:block;height:100%;border-radius:3px;background:var(--accent);transition:width .3s ease}
   .mnote{margin:11px 0 6px;font-size:10.5px;line-height:1.5;color:var(--tx-dim)}
+  .mnote b{color:var(--accent-soft);font-weight:700}
   .fb{display:flex;flex-direction:column;gap:4px}
   .fb .f{display:flex;gap:7px;font-size:11px;line-height:1.5;padding:2px 0}
   .fb .f .ic{flex:none;width:14px;text-align:center;font-weight:800}
@@ -660,6 +662,7 @@
   /* ---------- 라이브러리 ---------- */
   function visible(){
     let items=library.slice();
+    items=items.filter(x=>!compose.some(c=>c.id===x.id));   // 조합에 담긴 단어는 내 단어에서 숨김
     if(activeCats.size)items=items.filter(x=>activeCats.has(x.cat));
     if(query)items=items.filter(x=>(x.ko||"").toLowerCase().includes(query)||x.en.toLowerCase().includes(query));
     items.sort((a,b)=>b.count-a.count||b.created-a.created);
@@ -674,7 +677,8 @@
       return;
     }
     if(!items.length){
-      libEl.innerHTML='<div class="empty"><p>'+(query?"검색 결과가 없어요.":"이 분류엔 단어가 없어요.")+'</p></div>';return;
+      const msg=query?"검색 결과가 없어요.":(activeCats.size?"이 분류엔 표시할 단어가 없어요.":"표시할 단어가 없어요 · 조합에 담긴 단어는 여기서 숨겨져요.");
+      libEl.innerHTML='<div class="empty"><p>'+msg+'</p></div>';return;
     }
     items.forEach(item=>{
       const inComp=compose.some(c=>c.id===item.id);
@@ -745,7 +749,8 @@
     compose.forEach(c=>{
       const tok=document.createElement("span");tok.className="ctok";
       const tx=document.createElement("span");tx.textContent=c.en;tok.appendChild(tx);
-      const x=document.createElement("button");x.type="button";x.className="x";x.setAttribute("aria-label",c.en+" 제거");x.textContent="×";
+      const x=document.createElement("button");x.type="button";x.className="x";x.setAttribute("aria-label",c.en+" 제거");
+      x.innerHTML='<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l6 6M10 4l-6 6"/></svg>';
       x.addEventListener("click",e=>{e.stopPropagation();removeFromCompose(c.id);});
       tok.appendChild(x);
       composeBox.appendChild(tok);
@@ -775,16 +780,41 @@
     translateAllBtn.hidden = n===0;
     translateAllBtn.textContent = n ? ("번역하기 "+n) : "번역하기";
   }
+  // Supabase Edge Function(LLM 프록시)에 미사전 단어 번역 요청
+  const TRANSLATE_FN=(window.TRANSLATE_FN||"translate");
+  async function aiTranslate(words){
+    if(!sb || !sb.functions) throw new Error("AI 번역 미설정");
+    const { data, error } = await sb.functions.invoke(TRANSLATE_FN, { body:{ words } });
+    if(error) throw error;
+    return (data && data.translations) || {};
+  }
   async function translateAll(){
     const targets=library.filter(x=>!(x.ko&&x.ko.trim()));
     if(!targets.length){ toast("번역할 단어가 없어요"); return; }
-    const updated=[];
-    targets.forEach(x=>{ const ko=translate(x.en); if(ko){ x.ko=ko; updated.push(x); } });
-    if(!updated.length){ toast("사전에 없는 단어들이에요 · 더블클릭으로 직접 입력할 수 있어요"); return; }
-    persistLocal(); renderAll();
-    const rest=targets.length-updated.length;
-    toast(updated.length+"개 번역했어요"+(rest>0?" · 나머지 "+rest+"개는 직접 입력":""));
-    for(const x of updated){ try{ await sbUpdate(x.id,{ko:x.ko}); }catch(e){ console.error(e); } }
+    // 1) 로컬 사전으로 즉시 번역
+    const dictDone=[];
+    targets.forEach(x=>{ const ko=translate(x.en); if(ko){ x.ko=ko; dictDone.push(x); } });
+    if(dictDone.length){ persistLocal(); renderAll(); for(const x of dictDone){ try{ await sbUpdate(x.id,{ko:x.ko}); }catch(e){} } }
+    // 2) 사전에 없는 단어는 AI에게 번역 요청
+    const rest=library.filter(x=>!(x.ko&&x.ko.trim()));
+    if(!rest.length){ toast(dictDone.length+"개 번역 완료"); return; }
+    if(!sb){ toast(dictDone.length?("사전 번역 "+dictDone.length+"개 · 나머지는 직접 입력"):"사전에 없는 단어예요 · 더블클릭으로 직접 입력"); return; }
+    const prev=translateAllBtn.textContent;
+    translateAllBtn.disabled=true; translateAllBtn.textContent="AI 번역 중…";
+    try{
+      const map=await aiTranslate(rest.map(x=>x.en));
+      const lc={}; Object.keys(map).forEach(k=>{ lc[k.toLowerCase()]=map[k]; });
+      const aiDone=[];
+      rest.forEach(x=>{ const ko=(map[x.en]||lc[x.en.toLowerCase()]||"").trim(); if(ko){ x.ko=ko; aiDone.push(x); } });
+      persistLocal(); renderAll();
+      toast(aiDone.length?("AI 번역 "+aiDone.length+"개 완료"):"AI 번역 결과가 비어 있어요");
+      for(const x of aiDone){ try{ await sbUpdate(x.id,{ko:x.ko}); }catch(e){} }
+    }catch(e){
+      console.error(e);
+      toast("AI 번역을 사용할 수 없어요 · 번역 함수 설정이 필요해요");
+    }finally{
+      translateAllBtn.disabled=false; refreshTranslateBtn();
+    }
   }
   translateAllBtn.addEventListener("click",translateAll);
 
@@ -823,87 +853,131 @@
 
   /* ---------- 평가 (Seedream 기준) ---------- */
   const evalInput=$("#evalInput"), evalModelsEl=$("#evalModels"), evalResultEl=$("#evalResult");
-  const EVAL_MODELS=[{id:"4.0",label:"4.0"},{id:"4.5",label:"4.5"},{id:"5.0",label:"5.0 Lite"}];
+  const EVAL_MODELS=[
+    {id:"4.0",label:"Seedream 4.0",role:"텍스트→이미지 · 세대 중심"},
+    {id:"4.5",label:"Seedream 4.5",role:"편집 · 텍스트 렌더링"},
+    {id:"5.0",label:"Seedream 5.0 Lite",role:"심층 사고 · 웹 검색"}
+  ];
   let evalModel="4.0";
 
   function composedPrompt(){ return compose.map(c=>c.en).join(", "); }
   function syncEvalFromCompose(){ if(evalInput) evalInput.value=composedPrompt(); }
   function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
-  function evaluatePrompt(raw, model){
+  const clamp01=v=>Math.max(0,Math.min(1,v));
+  const avgScore=c=>c.reduce((s,x)=>s+x[1],0)/c.length;
+
+  /* 프롬프트를 한 번 분석해 모델별 채점에 쓰는 신호값 추출 */
+  function analyzePrompt(raw){
     const text=String(raw||"").trim();
     const t=text.toLowerCase();
-    const words=text.split(/\s+/).filter(Boolean);
-    const wc=words.length;
-    const hasAny=arr=>arr.some(k=>t.includes(k));
+    const wc=text.split(/\s+/).filter(Boolean).length;
+    const sentences=text.split(/[.!?\n]+/).map(s=>s.trim()).filter(Boolean).length;
+    const has=arr=>arr.some(k=>t.includes(k));
 
-    const ACTION=["running","walking","standing","sitting","holding","posing","jumping","dancing","looking","smiling","leaning","kneeling","floating","flying","reaching","gazing","reading","writing","drinking","playing","riding","crossing","wearing","staring","resting"];
-    const SETTING=["background","backdrop","in a ","in an ","on a ","on an ","at a ","at the ","against","behind","lobby","office","studio","beach","field","room","street","city","forest","indoor","outdoor","environment","scene","landscape","mountain","sky","cafe","restaurant","desert","ocean"," sea ","window","wall","floor","park","garden","interior","rooftop","kitchen","stage","table"];
-    const STYLE=["photography","photo ","cinematic","cinematography","illustration","painting","render","anime","cartoon","editorial","portrait","flat design","watercolor","oil ","sketch"," style","aesthetic","realistic","photorealistic","minimalist","vintage","lifestyle","comic","concept art","pixel art"];
-    const TECH_KW=["sharp focus","depth of field","bokeh","lighting","studio light","natural light","golden hour","cinematic lighting","high detail","ultra detailed","ultra-detailed","macro","hdr","soft light"];
-    const reRes=/\b[1248]\s?k\b|\bresolution\b/i;
-    const reLens=/\b\d{2,3}\s?mm\b/i;
-    const reAspect=/\b\d{1,2}:\d{1,2}\b/;
-    const reArticleNoun=/\b(a|an|the)\s+[a-z][a-z-]+/i;
-    const reQuoted=/["“][^"”]{2,}["”]/;
-
+    const ACTION=["running","walking","standing","sitting","holding","posing","jumping","dancing","looking","smiling","leaning","kneeling","floating","flying","reaching","gazing","reading","writing","drinking","playing","riding","crossing","wearing","staring","resting","using"];
+    const SETTING=["background","backdrop","in a ","in an ","on a ","on an ","at a ","at the ","against","behind","lobby","office","studio","beach","field","room","street","city","forest","indoor","outdoor","environment","scene","landscape","mountain","sky","cafe","restaurant","desert","ocean"," sea ","window","wall","floor","park","garden","interior","rooftop","kitchen","stage","table","gradient"];
+    const STYLE=["photography","photo ","cinematic","cinematography","illustration","painting","render","anime","cartoon","editorial","portrait","flat design","flat illustration","watercolor","oil ","sketch"," style","aesthetic","realistic","photorealistic","minimalist","vintage","lifestyle","comic","concept art","pixel art"];
+    const TECH_KW=["sharp focus","depth of field","bokeh","lighting","studio light","natural light","golden hour","cinematic lighting","high detail","ultra detailed","ultra-detailed","macro","hdr","soft light","reflections"];
+    const reRes=/\b[1248]\s?k\b/i, reLens=/\b\d{2,3}\s?mm\b/i, reAspect=/\b\d{1,2}:\d{1,2}\b/;
+    const reArticleNoun=/\b(a|an|the)\s+[a-z][a-z-]+/i, reQuoted=/["“][^"”]{2,}["”]/;
     const gerund=/\b[a-z]{3,}ing\b/.test(t);
-    const subjectHit=reArticleNoun.test(text)||/^[A-Z][a-z]+/.test(text);
-    const actionHit=hasAny(ACTION)||(gerund && !/^(lighting|painting)$/.test(t));
-    const settingHit=hasAny(SETTING);
-    const styleHit=hasAny(STYLE);
-    const techHit=reRes.test(text)||reLens.test(text)||reAspect.test(text)||hasAny(TECH_KW);
+    const qm=text.match(/["“][^"”]{1,}["”]/);
+    const quotedWords=qm?qm[0].replace(/["“”]/g,"").trim().split(/\s+/).filter(Boolean).length:0;
 
-    const sc=v=>v?1:0.18;
-    const scores={
-      subject: subjectHit?1:(wc>=4?0.5:0.2),
-      action: sc(actionHit),
-      setting: sc(settingHit),
-      style: sc(styleHit),
-      tech: sc(techHit)
+    return {
+      text, t, wc, sentences,
+      subject: reArticleNoun.test(text)||/^[A-Z][a-z]+/.test(text),
+      action: has(ACTION)||gerund,
+      setting: has(SETTING),
+      style: has(STYLE),
+      tech: reRes.test(text)||reLens.test(text)||reAspect.test(text)||has(TECH_KW),
+      resExplicit: reRes.test(text),
+      is4k: /\b4\s?k\b/i.test(text),
+      quoted: reQuoted.test(text), quotedWords,
+      fontSpec: /\b(font|sans-?serif|serif|script|cursive|typeface|bold|italic|lettering|handwritten)\b/i.test(text),
+      posSpec: /\b(top|bottom|center|centered|left|right|overlay|upper|lower|corner|third|middle|above|below)\b/i.test(text),
+      textIntent: /\b(text|headline|title|caption|label|poster|banner|ad\b|advertisement|sign|logo|word|reading|overlay|slogan|typography)\b/i.test(text),
+      editIntent: /\b(replace|change|edit|restyle|remove|swap|modify|transform|recolor|retouch)\b/i.test(text),
+      keepUnchanged: /\b(keep|maintain|unchanged|exactly as|same (font|size|position|composition|style)|preserve)\b/i.test(text),
+      logic: /\b(relationship|between|leads? to|flow|because|then|infographic|diagram|process|cause|connecting|sequence|step|arrow|cycle)\b/i.test(text),
+      factual: /\b(chart|data|statistics|revenue|compare|comparison|20\d\d|sales|market|gdp|percent|q[1-4]\b|%)\b/i.test(text),
+      webSearch: /web[_ ]?search/i.test(text),
+      structure: /\b(diagram|infographic|labeled|labels|flowchart|layout|grid|chart)\b/i.test(text),
+      vaguePhrase: /\b(a |an )?(picture|photo|image) of\b/.test(t) && wc<=7,
+      pretty: /\b(pretty|nice|beautiful|cute|cool|amazing|good)\b/.test(t) && wc<=8,
+      conflictCount: ["cinematic","watercolor","pixel art","anime","oil painting","3d render","cartoon","flat illustration","comic"].filter(s=>t.includes(s)).length,
+      minimalConflict: t.includes("minimalist") && /\b(ornate|detailed|intricate|busy|decorative)\b/.test(t),
+      negatives: (t.match(/\bno\s+\w+/g)||[]).length + (t.match(/\bwithout\b/g)||[]).length,
+      vagueSize: /\b(high\s?res(olution)?|hi-?res|hd)\b/.test(t) && !/\b[1248]\s?k\b/i.test(text)
     };
-    let base=(scores.subject+scores.action+scores.setting+scores.style+scores.tech)/5*100;
+  }
 
-    const good=[], tips=[];
-    if(subjectHit) good.push("주제가 분명해요"); else tips.push("핵심 주제를 명확히 적어주세요 (예: a golden retriever puppy)");
-    if(actionHit) good.push("동작·자세가 들어갔어요"); else tips.push("동작·자세를 더하면 정적인 기본 포즈를 피할 수 있어요 (예: running across a field)");
-    if(settingHit) good.push("배경·환경이 묘사됐어요"); else tips.push("배경·환경을 넣으면 구성이 좋아져요 (예: in a modern office lobby)");
-    if(styleHit) good.push("스타일이 지정됐어요"); else tips.push("스타일을 지정하세요 (예: editorial photography, cinematic)");
-    if(techHit) good.push("기술 사양이 있어요"); else tips.push("기술 사양을 넣으세요 (예: 4K, sharp focus, studio lighting)");
+  /* 모델별로 완전히 다른 평가축·피드백·점수 */
+  function scoreModel(x, model){
+    const crit=[], good=[], tips=[]; let pen=0;
 
-    let penalty=0;
-    if(/\b(a |an )?(picture|photo|image) of\b/.test(t) && wc<=7){ penalty+=22; tips.push("‘…의 사진’ 같은 모호한 요청은 결과가 예측 불가해져요. 구체적으로 묘사하세요"); }
-    if(wc<5){ penalty+=18; tips.push("요소가 너무 적어요. 주제·배경·스타일을 더해주세요"); }
-    if(/\b(pretty|nice|beautiful|cute|cool|amazing|good)\b/.test(t) && wc<=8){ penalty+=8; }
-    const conflictStyles=["cinematic","watercolor","pixel art","anime","oil painting","3d render","cartoon","flat illustration","comic"];
-    const cs=conflictStyles.filter(s=>t.includes(s)).length;
-    if(cs>=3){ penalty+=14; tips.push("스타일을 여러 개 섞지 마세요. 생성마다 한 가지 스타일을 고르세요"); }
-    if(t.includes("minimalist") && /\b(ornate|detailed|intricate|busy|decorative)\b/.test(t)){ penalty+=10; tips.push("‘미니멀 + 장식 요소가 많은’처럼 모순된 지시를 피하세요"); }
-    const negs=(t.match(/\bno\s+\w+/g)||[]).length + (t.match(/\bwithout\b/g)||[]).length;
-    const posCount=[subjectHit,actionHit,settingHit,styleHit,techHit].filter(Boolean).length;
-    if(negs>=2 && posCount<=2){ penalty+=14; tips.push("원하지 않는 것 대신 원하는 것을 긍정적으로 묘사하세요"); }
-    if(/\b(high\s?res(olution)?|hi-?res|hd)\b/.test(t) && !/\b[1248]\s?k\b/i.test(text)){ penalty+=8; tips.push("‘고해상도’ 대신 1K·2K·4K처럼 정확한 값을 쓰세요"); }
-
-    let LONG=50, modelNote="";
     if(model==="4.0"){
-      LONG=45; modelNote="4.0은 명확·간결한 설명에 강해요. 핵심 3~5요소에 집중하세요.";
-      if(wc<=35 && base>=70){ base+=4; good.push("간결해서 4.0에 적합해요"); }
-      if(!/\b[1248]\s?k\b/i.test(text)) tips.push("4.0: 해상도를 명시하세요 (1K · 2K · 4K)");
-    } else if(model==="4.5"){
-      LONG=58; modelNote="4.5는 편집·텍스트 렌더링에 강해요.";
-      if(reQuoted.test(text)){ base+=8; good.push("따옴표 텍스트가 있어 텍스트 렌더링에 적합해요"); }
-      else tips.push("4.5: 이미지에 글자를 넣으려면 정확한 텍스트를 \"따옴표\"로 감싸세요 (3~5단어)");
-    } else {
-      LONG=110; modelNote="5.0 Lite는 심층 추론이 가능해 더 풍부한 지침이 유리해요.";
-      const logic=["relationship","between","leads to","flow","because","then","infographic","diagram","process","cause","connecting"];
-      if(logic.some(k=>t.includes(k))){ base+=8; good.push("논리적 관계 설명이 있어 5.0 Lite에 잘 맞아요"); }
-      else tips.push("5.0 Lite: 시각 요소뿐 아니라 논리적 관계도 설명해보세요");
-      if(/\b(chart|data|statistics|revenue|compare|20\d\d|sales)\b/.test(t)) tips.push("실제 데이터·시사 내용이면 web_search 활성화를 고려하세요");
+      const subj = x.vaguePhrase?0.1:(x.subject?1:(x.wc>=4?0.5:0.2));
+      const concise = x.sentences<=4 ? (x.wc<=30?1:(x.wc<=45?0.85:0.6)) : clamp01(1-(x.sentences-4)*0.2);
+      const res = x.resExplicit?1:(x.tech?0.4:0.12);
+      crit.push(["주제 명확성",subj],["동작·자세",x.action?1:0.2],["배경·환경",x.setting?1:0.2],["스타일",x.style?1:0.2],["해상도 명시",res],["간결·직접성",concise]);
+      if(x.vaguePhrase){ pen+=0.28; tips.push("4.0은 모호한 요청에 특히 엄격해요. ‘…의 사진’ 대신 주제·배경·조명·스타일을 구체적으로 쓰세요"); }
+      if(x.pretty) pen+=0.1;
+      if(x.conflictCount>=2){ pen+=0.14; tips.push("스타일을 섞지 마세요. 변형이 필요하면 한 스타일씩 n=3~5로 따로 생성하세요"); }
+      if(x.wc>45){ pen+=Math.min(0.16,(x.wc-45)/180); tips.push("4.0은 핵심 3~5요소·2~4문장이 가장 안정적이에요. 더 줄여보세요"); }
+      if(x.subject && !x.vaguePhrase) good.push("주제가 직접적이라 4.0의 강점(명확한 텍스트→이미지)에 맞아요");
+      if(x.resExplicit) good.push("해상도를 명시해 4.0이 출력 품질을 맞추기 쉬워요"); else tips.push("해상도를 1K·2K·4K로 명시하세요 — 4.0은 ‘고해상도’를 해석하지 못해요");
+      if(!x.action) tips.push("동작·자세를 넣으세요 — 없으면 정적인 기본 포즈가 돼요 (예: running across a field)");
+      tips.push("탐색은 n=3~5로 변형을 뽑고, 캐릭터·제품 일관성은 다중 참조 이미지를 활용하세요");
     }
-    if(wc>LONG){ penalty+=Math.min(18,Math.round((wc-LONG)/4)); tips.push("프롬프트가 너무 길어요. 가장 중요한 3~5요소로 줄이세요"); }
 
-    const total=Math.max(0,Math.min(100,Math.round(base-penalty)));
-    return {total, scores, good:good.slice(0,6), tips:tips.slice(0,5), modelNote};
+    else if(model==="4.5"){
+      let textScore;
+      if(x.quoted) textScore = clamp01(0.55 + (x.fontSpec?0.2:0) + (x.posSpec?0.15:0) + (x.quotedWords>0&&x.quotedWords<=5?0.1:-0.1));
+      else if(x.textIntent) textScore = 0.22;
+      else textScore = 0.7;
+      const precision = clamp01(0.35 + (x.quoted?0.2:0) + (x.fontSpec?0.15:0) + (x.posSpec?0.1:0) + (x.keepUnchanged?0.2:0));
+      const res = x.is4k?1:(x.resExplicit?0.7:0.3);
+      crit.push(["주제 명확성",x.subject?1:0.3],["배경·구성",x.setting?1:0.25],["스타일",x.style?1:0.3],["텍스트 렌더링",textScore],["지시 정밀도",precision],["해상도(4K)",res]);
+      if(x.quoted){
+        good.push("따옴표 텍스트가 있어 4.5의 텍스트 렌더링 강점에 잘 맞아요");
+        if(!x.fontSpec) tips.push("글꼴 스타일을 지정하세요 (예: bold sans-serif, elegant script)");
+        if(!x.posSpec) tips.push("텍스트 위치를 지정하세요 (예: top center, upper third)");
+        if(x.quotedWords>5) tips.push("이미지 속 텍스트는 3~5단어로 짧게 — 길면 깨질 수 있어요");
+      } else if(x.textIntent){
+        tips.push("글자를 넣으려면 정확한 텍스트를 \"따옴표\"로 감싸세요 (예: \"START FREE\")");
+      }
+      if(x.editIntent){
+        good.push("편집 의도가 있어요 — 4.5는 편집에 최적입니다");
+        if(!x.keepUnchanged) tips.push("편집 시 ‘바꿀 부분만’ 설명하고 ‘나머지는 그대로 유지’를 덧붙이세요");
+        tips.push("편집은 원본 이미지를 image_urls로 업로드해야 처음부터 재생성되지 않아요");
+      }
+      if(!x.is4k) tips.push("4K가 필요하면 명시적으로 ‘4K’를 요청하세요 — 4.5는 고해상도에 맞춰 최적화합니다");
+    }
+
+    else { // 5.0 Lite
+      const richness = clamp01(0.3 + x.wc/70);
+      const logic = x.logic?1:0.3;
+      const fact = x.factual ? (x.webSearch?1:0.4) : 0.7;
+      const structure = x.structure?1:(x.subject?0.6:0.3);
+      crit.push(["주제·시각 요소",x.subject?1:0.3],["논리적 관계",logic],["심층 디테일",richness],["구조·라벨",structure],["사실성·검색",fact],["스타일",x.style?1:0.4]);
+      if(x.logic) good.push("논리적 관계 설명이 있어 5.0 Lite의 추론 능력에 잘 맞아요");
+      else tips.push("5.0 Lite는 생성 전에 추론해요. 시각 요소뿐 아니라 논리적 관계를 설명하세요 (예: A→B→C로 이어지는 흐름)");
+      if(x.wc<25) tips.push("5.0 Lite는 4.0과 달리 풍부한 지침이 유리해요. 더 자세히 설명해도 좋아요");
+      else good.push("지침이 충분히 풍부해 심층 사고에 유리해요");
+      if(x.factual && !x.webSearch) tips.push("실제 데이터·시사·통계가 포함되면 web_search: true를 켜세요 (생성 전 검색)");
+      if(x.structure && !x.logic) tips.push("도표라면 구조와 데이터 간 관계(라벨·화살표·단계)를 명확히 설명하세요");
+      if(!x.factual) good.push("창작 주제엔 web_search를 끄는 게 비용·속도에 유리해요");
+    }
+
+    // 모델 불문 품질 저하 요인
+    if(x.minimalConflict){ pen+=0.1; tips.push("‘미니멀 + 장식 요소가 많은’처럼 모순된 지시를 피하세요"); }
+    if(x.negatives>=2){ pen+=0.12; tips.push("원하지 않는 것 대신 원하는 것을 긍정적으로 묘사하세요"); }
+    if(x.vagueSize){ pen+=0.08; tips.push("‘고해상도’ 대신 1K·2K·4K처럼 정확한 값을 쓰세요"); }
+
+    const total=Math.max(0,Math.min(100,Math.round(clamp01(avgScore(crit)-pen)*100)));
+    return { total, criteria:crit, good:good.slice(0,4), tips:tips.slice(0,5) };
   }
 
   function ringColor(s){ return s>=80?"#7fa86b":(s>=60?"var(--accent-bright)":(s>=40?"#cf935f":"#e08a6a")); }
@@ -915,9 +989,9 @@
       evalResultEl.innerHTML='<div class="eval-empty">서랍 탭에서 단어를 조합하면 여기서 자동으로 평가돼요.<br>또는 위 칸에 직접 프롬프트를 붙여넣어 보세요.</div>';
       return;
     }
-    const r=evaluatePrompt(text, evalModel), col=ringColor(r.total);
-    const critRows=[["주제",r.scores.subject],["동작·자세",r.scores.action],["환경·배경",r.scores.setting],["스타일",r.scores.style],["기술 사양",r.scores.tech]]
-      .map(([nm,v])=>`<div class="c"><span class="nm">${nm}</span><span class="bar"><i style="width:${Math.round(v*100)}%"></i></span></div>`).join("");
+    const m=EVAL_MODELS.find(e=>e.id===evalModel)||EVAL_MODELS[0];
+    const r=scoreModel(analyzePrompt(text), evalModel), col=ringColor(r.total);
+    const critRows=r.criteria.map(([nm,v])=>`<div class="c"><span class="nm">${esc(nm)}</span><span class="bar"><i style="width:${Math.round(clamp01(v)*100)}%"></i></span></div>`).join("");
     const fb=[
       ...r.good.map(g=>`<div class="f good"><span class="ic">✓</span><span class="tx">${esc(g)}</span></div>`),
       ...r.tips.map(tp=>`<div class="f tip"><span class="ic">→</span><span class="tx">${esc(tp)}</span></div>`)
@@ -929,7 +1003,7 @@
         '</div>'+
         '<div class="crit">'+critRows+'</div>'+
       '</div>'+
-      '<div class="mnote">'+esc(r.modelNote)+'</div>'+
+      '<div class="mnote"><b>'+esc(m.label)+'</b> · '+esc(m.role)+'</div>'+
       '<div class="fb">'+fb+'</div>';
   }
 
