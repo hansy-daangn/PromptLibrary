@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>네비게이션 디자인 미리보기 · A1~B3</title>
+<style>
+  :root{
+    --bg:#1a1815;--raise:#252220;--raise-2:#2e2a26;--line:#393430;--line-soft:#312d29;
+    --tx:#ece6df;--tx-mut:#988f86;--tx-dim:#6b645e;
+    --accent:#c2560b;--accent-bright:#e2710f;--accent-soft:#f0c39a;
+    --accent-tint:rgba(194,86,11,.15);--accent-tint-2:rgba(194,86,11,.28);
+    --radius:11px;--radius-sm:7px;
+    --shadow:0 20px 56px -20px rgba(0,0,0,.72), 0 2px 8px -2px rgba(0,0,0,.5);
+    --body-base:#121110;--body-glow:#2a2622;
+    --bar-top:#211e1b;--bar-bot:#1a1815;--input-bg:#1c1a17;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:radial-gradient(900px 500px at 50% -10%, var(--body-glow), transparent), var(--body-base);
+    font-family:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",system-ui,sans-serif;
+    color:var(--tx);padding:30px 16px 80px;-webkit-font-smoothing:antialiased;min-height:100vh;
+  }
+  .intro{max-width:1180px;margin:0 auto 26px;text-align:center}
+  .intro h1{font-size:18px;margin:0 0 8px;letter-spacing:.2px}
+  .intro p{margin:0;color:var(--tx-mut);font-size:13px;line-height:1.7}
+  .intro b{color:var(--accent-soft)}
+  .grid{display:grid;grid-template-columns:repeat(3,400px);gap:30px 24px;justify-content:center;max-width:1280px;margin:0 auto}
+  @media(max-width:1280px){.grid{grid-template-columns:repeat(2,400px)}}
+  @media(max-width:860px){.grid{grid-template-columns:400px}}
+  @media(max-width:430px){.grid{grid-template-columns:100%}.card .panel{width:100%}}
+
+  .card{display:flex;flex-direction:column;gap:11px}
+  .card-tag{display:flex;align-items:baseline;gap:9px;padding-left:3px}
+  .card-tag .id{font-size:13px;font-weight:800;color:var(--accent-soft);letter-spacing:.5px;background:var(--accent-tint);padding:2px 9px;border-radius:6px}
+  .card-tag .desc{font-size:11.5px;color:var(--tx-mut);font-weight:600}
+
+  .panel{width:400px;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;position:relative}
+  .bar{display:flex;align-items:center;gap:8px;padding:10px 13px;background:linear-gradient(var(--bar-top),var(--bar-bot));border-bottom:1px solid var(--line-soft)}
+  .bar .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
+  .bar .name{font-size:12.5px;font-weight:650;letter-spacing:.2px}
+  .bar .right{margin-left:auto;display:flex;align-items:center;gap:9px;color:var(--tx-dim)}
+  .bar .right svg{width:14px;height:14px}
+  .iconbtn{appearance:none;border:0;background:none;color:var(--tx-mut);cursor:pointer;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;transition:.13s;position:relative}
+  .iconbtn:hover{color:var(--accent-soft);background:var(--raise-2)}
+  .iconbtn.on{color:var(--accent-soft);background:var(--accent-tint)}
+  .iconbtn svg{width:15px;height:15px}
+  .cloud{display:flex;align-items:center;gap:4px;font-size:10px;color:#7fa86b}
+  .cloud svg{width:12px;height:12px}
+
+  /* ── 공통 탭 행 컨테이너 ── */
+  .nav{padding:9px 13px;border-bottom:1px solid var(--line-soft)}
+
+  /* (1) 밑줄형 underline */
+  .nav.underline{display:flex;gap:18px;padding:0 14px;border-bottom:1px solid var(--line-soft)}
+  .nav.underline .t{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;font-weight:650;color:var(--tx-dim);
+    cursor:pointer;padding:11px 1px 10px;position:relative;transition:color .14s}
+  .nav.underline .t:hover{color:var(--tx-mut)}
+  .nav.underline .t.active{color:var(--tx)}
+  .nav.underline .t.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);border-radius:2px}
+
+  /* (2) 세그먼트 알약형 segmented */
+  .nav.segmented{padding:9px 13px}
+  .seg{display:flex;gap:3px;background:var(--input-bg);border:1px solid var(--line-soft);border-radius:9px;padding:3px}
+  .seg .t{flex:1;appearance:none;border:0;background:none;font:inherit;font-size:12px;font-weight:650;color:var(--tx-mut);
+    cursor:pointer;padding:7px 4px;border-radius:6px;transition:.14s}
+  .seg .t:hover{color:var(--tx)}
+  .seg .t.active{background:var(--accent);color:#fff;box-shadow:0 1px 4px -1px rgba(0,0,0,.4)}
+
+  /* (3) 소프트 고스트형 ghost */
+  .nav.ghost{display:flex;gap:6px;padding:10px 13px}
+  .nav.ghost .t{appearance:none;border:0;background:none;font:inherit;font-size:12px;font-weight:600;color:var(--tx-dim);
+    cursor:pointer;padding:6px 13px;border-radius:999px;transition:.14s}
+  .nav.ghost .t:hover{color:var(--tx);background:var(--raise)}
+  .nav.ghost .t.active{color:var(--accent-soft);background:var(--accent-tint)}
+
+  /* ── 뷰 본문 ── */
+  .views{padding:13px}
+  .view{display:none}
+  .view.show{display:block}
+
+  /* 서랍 뷰 mock */
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:11px}
+  .chip{font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--raise);color:var(--tx-mut);border-radius:999px;padding:4px 11px}
+  .chip.on{background:var(--accent-tint);border-color:var(--accent);color:var(--accent-soft)}
+  .row{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;border:1px solid transparent}
+  .row:hover{background:var(--raise);border-color:var(--line-soft)}
+  .ind{width:13px;height:13px;border-radius:50%;border:1.6px solid var(--line);flex:none}
+  .row.in .ind{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
+  .lbl{font-size:13px;font-weight:600}
+  .cat{margin-left:auto;font-size:9.5px;font-weight:600;color:var(--tx-mut);background:var(--raise-2);border:1px solid var(--line-soft);padding:2px 7px;border-radius:999px}
+  .composebar{margin-top:11px;border:1px solid var(--line);background:var(--input-bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:12px;color:var(--tx-mut);display:flex;align-items:center;gap:8px}
+  .composebar b{color:var(--tx);font-weight:600}
+  .composebar .copy{margin-left:auto;font-size:11px;font-weight:700;color:#fff;background:var(--accent);padding:5px 12px;border-radius:6px}
+
+  /* 평가 뷰 mock */
+  .eval-in{background:var(--input-bg);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 11px;font-size:12px;color:var(--tx-dim);min-height:54px;line-height:1.6}
+  .eval-btn{margin-top:9px;width:100%;text-align:center;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:var(--radius-sm);padding:10px;cursor:pointer}
+  .eval-btn:hover{background:var(--accent-bright)}
+  .score{display:flex;align-items:center;gap:14px;margin-top:13px;padding:13px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--raise)}
+  .ring{width:62px;height:62px;flex:none;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0 82%, var(--line) 82% 100%);position:relative}
+  .ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--raise)}
+  .ring span{position:relative;font-size:19px;font-weight:800;color:var(--accent-soft)}
+  .ring span small{font-size:10px;color:var(--tx-dim);font-weight:600}
+  .crit{flex:1;display:flex;flex-direction:column;gap:7px}
+  .crit .c{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--tx-mut)}
+  .crit .c .nm{width:48px;flex:none;font-weight:600}
+  .crit .c .bar{flex:1;height:5px;border-radius:3px;background:var(--line)}
+  .crit .c .bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+
+  /* 참고 뷰 / 팝오버 공통 링크 리스트 */
+  .links{display:flex;flex-direction:column;gap:6px}
+  .lk{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border:1px solid var(--line-soft);border-radius:9px;background:var(--raise);cursor:pointer;transition:.13s}
+  .lk:hover{border-color:var(--accent);background:var(--accent-tint)}
+  .lk .fav{width:26px;height:26px;flex:none;border-radius:7px;background:var(--raise-2);display:grid;place-items:center;font-size:13px}
+  .lk .meta{min-width:0}
+  .lk .nm{font-size:12.5px;font-weight:650}
+  .lk .ds{font-size:10.5px;color:var(--tx-dim);margin-top:1px}
+  .lk .go{margin-left:auto;color:var(--tx-dim);align-self:center}
+  .lk .go svg{width:13px;height:13px}
+
+  /* A안 팝오버 */
+  .pop{position:absolute;top:46px;right:11px;width:270px;z-index:20;background:var(--raise);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:9px;display:none}
+  .pop.open{display:block;animation:pp .14s ease}
+  @keyframes pp{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+  .pop .ph{font-size:9.5px;color:var(--tx-dim);font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 6px 8px}
+  .hint{margin-top:9px;text-align:center;font-size:10px;color:var(--tx-dim)}
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>🗂️ 네비게이션 디자인 미리보기</h1>
+    <p><b>A안</b> = 2탭(서랍·평가) + 헤더의 🔗 아이콘으로 참고 사이트 팝오버 &nbsp;·&nbsp; <b>B안</b> = 3탭(서랍·평가·참고) 세그먼트<br>
+    각 안을 <b>밑줄형 / 알약형 / 고스트형</b> 3가지로. 탭과 🔗을 직접 눌러보고 <b>A1~B3 중 하나</b>만 골라주세요.</p>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+<script>
+  const SITES=[
+    {fav:"🎨",nm:"PromptHero",ds:"이미지 프롬프트 검색·갤러리"},
+    {fav:"🔍",nm:"Lexica",ds:"Stable Diffusion 프롬프트 탐색"},
+    {fav:"📚",nm:"Prompting Guide",ds:"프롬프트 작성법 가이드"},
+    {fav:"🧠",nm:"Anthropic Library",ds:"검증된 텍스트 프롬프트 모음"},
+  ];
+  const linksHTML = SITES.map(s=>`
+    <div class="lk">
+      <div class="fav">${s.fav}</div>
+      <div class="meta"><div class="nm">${s.nm}</div><div class="ds">${s.ds}</div></div>
+      <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+    </div>`).join("");
+
+  const drawerView = `
+    <div class="chips"><span class="chip on">스타일</span><span class="chip">조명</span><span class="chip">분위기</span><span class="chip">인물</span></div>
+    <div class="row in"><span class="ind"></span><span class="lbl">영화 같은</span><span class="cat">스타일</span></div>
+    <div class="row"><span class="ind"></span><span class="lbl">골든아워</span><span class="cat">조명</span></div>
+    <div class="row in"><span class="ind"></span><span class="lbl">몽환적인</span><span class="cat">분위기</span></div>
+    <div class="composebar">조합 <b>2개</b><span class="copy">복사</span></div>`;
+
+  const evalView = `
+    <div class="eval-in">A cat sitting on a windowsill at golden hour, cinematic, 85mm…</div>
+    <button class="eval-btn">프롬프트 평가하기</button>
+    <div class="score">
+      <div class="ring"><span>82<small>점</small></span></div>
+      <div class="crit">
+        <div class="c"><span class="nm">명확성</span><span class="bar"><i style="width:90%"></i></span></div>
+        <div class="c"><span class="nm">구체성</span><span class="bar"><i style="width:78%"></i></span></div>
+        <div class="c"><span class="nm">구조</span><span class="bar"><i style="width:70%"></i></span></div>
+        <div class="c"><span class="nm">맥락</span><span class="bar"><i style="width:85%"></i></span></div>
+      </div>
+    </div>`;
+
+  const refView = `<div class="links">${linksHTML}</div>`;
+
+  // 카드 정의: A안(2탭+아이콘) / B안(3탭)
+  const STYLES = {
+    underline:"밑줄형",
+    segmented:"알약 세그먼트형",
+    ghost:"소프트 고스트형"
+  };
+  const CARDS = [
+    {id:"A1",pat:"A",style:"underline"},
+    {id:"A2",pat:"A",style:"segmented"},
+    {id:"A3",pat:"A",style:"ghost"},
+    {id:"B1",pat:"B",style:"underline"},
+    {id:"B2",pat:"B",style:"segmented"},
+    {id:"B3",pat:"B",style:"ghost"},
+  ];
+
+  function tabsHTML(pat,style){
+    const tabs = pat==="A" ? ["서랍","평가"] : ["서랍","평가","참고"];
+    const inner = tabs.map((t,i)=>`<button class="t${i===0?' active':''}" data-i="${i}">${t}</button>`).join("");
+    if(style==="segmented") return `<div class="nav segmented"><div class="seg">${inner}</div></div>`;
+    return `<div class="nav ${style}">${inner}</div>`;
+  }
+
+  function cardHTML(c){
+    const isA = c.pat==="A";
+    const desc = (isA?"2탭 + 🔗 참고 팝오버":"3탭 세그먼트") + " · " + STYLES[c.style];
+    const views = isA
+      ? `<div class="view show" data-v="0">${drawerView}</div><div class="view" data-v="1">${evalView}</div>`
+      : `<div class="view show" data-v="0">${drawerView}</div><div class="view" data-v="1">${evalView}</div><div class="view" data-v="2">${refView}</div>`;
+    const headerRight = isA
+      ? `<button class="iconbtn js-pop" title="참고 사이트">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>
+         </button>
+         <span class="cloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>동기화됨</span>`
+      : `<span class="cloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>동기화됨</span>`;
+    const pop = isA
+      ? `<div class="pop"><div class="ph">참고 사이트</div><div class="links">${linksHTML}</div></div>`
+      : "";
+    const hint = isA ? `<div class="hint">탭과 🔗 아이콘을 눌러보세요</div>` : `<div class="hint">탭을 눌러보세요</div>`;
+    return `
+      <div class="card">
+        <div class="card-tag"><span class="id">${c.id}</span><span class="desc">${desc}</span></div>
+        <div class="panel" data-card="${c.id}">
+          <div class="bar"><span class="dot"></span><span class="name">프롬프트 서랍</span><span class="right">${headerRight}</span></div>
+          ${tabsHTML(c.pat,c.style)}
+          ${pop}
+          <div class="views">${views}</div>
+        </div>
+        ${hint}
+      </div>`;
+  }
+
+  document.getElementById("grid").innerHTML = CARDS.map(cardHTML).join("");
+
+  // 상호작용: 탭 전환
+  document.querySelectorAll(".panel").forEach(panel=>{
+    const tabs=[...panel.querySelectorAll(".t")];
+    const views=[...panel.querySelectorAll(".view")];
+    tabs.forEach(t=>t.addEventListener("click",()=>{
+      const i=+t.dataset.i;
+      tabs.forEach(x=>x.classList.toggle("active",x===t));
+      views.forEach(v=>v.classList.toggle("show",+v.dataset.v===i));
+      panel.querySelector(".pop")?.classList.remove("open");
+      panel.querySelector(".js-pop")?.classList.remove("on");
+    }));
+    // 팝오버 (A안)
+    const popBtn=panel.querySelector(".js-pop"), pop=panel.querySelector(".pop");
+    if(popBtn&&pop){
+      popBtn.addEventListener("click",e=>{
+        e.stopPropagation();
+        const open=pop.classList.toggle("open");
+        popBtn.classList.toggle("on",open);
+      });
+    }
+  });
+  document.addEventListener("click",()=>{
+    document.querySelectorAll(".pop.open").forEach(p=>p.classList.remove("open"));
+    document.querySelectorAll(".js-pop.on").forEach(b=>b.classList.remove("on"));
+  });
+</script>
+</body>
+</html>
