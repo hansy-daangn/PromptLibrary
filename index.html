@@ -197,62 +197,135 @@
   .install-btn:hover{background:var(--accent-bright);border-color:var(--accent-bright)}
   @media (max-width:430px){.corner-btn{font-size:11px;padding:6px 11px}}
 
+  /* ── 탭 (3탭 · 밑줄형) ── */
+  .tabs{display:flex;align-items:center;gap:18px;padding:0 14px;background:linear-gradient(var(--bar-top),var(--bar-bot));
+    border-bottom:1px solid var(--line-soft);box-shadow:inset 0 1px 0 rgba(255,255,255,.025);user-select:none}
+  .tab{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;font-weight:650;color:var(--tx-dim);
+    cursor:pointer;padding:12px 1px 11px;position:relative;transition:color .14s}
+  .tab:hover{color:var(--tx-mut)}
+  .tab.active{color:var(--tx)}
+  .tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);border-radius:2px}
+  .tab:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px;border-radius:4px}
+  .tabs .cloud{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-dim)}
+  .tabs .cloud.ok{color:#7fa86b}
+  .tabs .cloud svg{width:12px;height:12px}
+
+  .view{display:none}
+  .view.show{display:block}
+
+  /* ── 조합 토큰 (개별 제거) ── */
+  .compose-box{display:flex;flex-wrap:wrap;gap:6px}
+  .ctok{display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:4px 5px 4px 9px;font-size:12px;color:var(--tx);transition:border-color .12s,background .12s}
+  .ctok:hover{border-color:var(--accent);background:var(--accent-tint)}
+  .ctok .x{appearance:none;border:0;background:none;color:var(--tx-dim);cursor:pointer;width:16px;height:16px;border-radius:50%;
+    display:grid;place-items:center;font-size:13px;line-height:1;opacity:0;transition:opacity .12s,background .12s,color .12s}
+  .ctok:hover .x{opacity:1}
+  .ctok .x:hover{background:var(--accent);color:#fff}
+  @media (hover:none){.ctok .x{opacity:.55}}
+
+  /* ── 평가 뷰 ── */
+  .eval-view{padding:13px}
+  .eval-head,.ref-head{font-size:10px;color:var(--tx-dim);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px}
+  .eval-input{width:100%;background:var(--input-bg);color:var(--tx);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:10px 11px;font:inherit;font-size:12.5px;line-height:1.6;resize:vertical;min-height:84px}
+  .eval-input::placeholder{color:var(--tx-dim)}
+  .eval-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
+  .eval-run{margin-top:9px;width:100%;appearance:none;font:inherit;font-size:12.5px;font-weight:700;color:#fff;
+    background:var(--accent);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:10px;cursor:pointer;transition:background .15s}
+  .eval-run:hover{background:var(--accent-bright);border-color:var(--accent-bright)}
+  .eval-note{margin-top:11px;font-size:11px;line-height:1.6;color:var(--tx-dim);text-align:center;
+    border:1px dashed var(--line-soft);border-radius:var(--radius);padding:12px 14px}
+
+  /* ── 참고 사이트 뷰 ── */
+  .ref-view{padding:13px}
+  .links{display:flex;flex-direction:column;gap:6px}
+  .lk{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line-soft);border-radius:9px;
+    background:var(--raise);text-decoration:none;color:inherit;transition:border-color .13s,background .13s}
+  .lk:hover{border-color:var(--accent);background:var(--accent-tint)}
+  .lk .fav{width:28px;height:28px;flex:none;border-radius:7px;background:var(--raise-2);display:grid;place-items:center;font-size:14px}
+  .lk .meta{min-width:0;flex:1;display:flex;flex-direction:column}
+  .lk .nm{font-size:12.5px;font-weight:650;color:var(--tx)}
+  .lk .ds{font-size:10.5px;color:var(--tx-dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lk .go{color:var(--tx-dim);flex:none}
+  .lk:hover .go{color:var(--accent-soft)}
+  .lk .go svg{width:14px;height:14px;display:block}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
   <div class="panel" role="application" aria-label="프롬프트 서랍">
-    <div class="bar">
-      <span class="dot"></span><span class="name">프롬프트 서랍</span>
+    <div class="tabs" role="tablist">
+      <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="drawer">서랍</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-tab="eval">평가</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-tab="ref">참고</button>
       <span class="cloud" id="cloud" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span id="cloudTxt"></span></span>
     </div>
 
     <div class="status" id="status" hidden></div>
 
-    <div class="body">
-      <div class="add-row">
-        <input id="input" type="text" placeholder="프롬프트 입력 · 비우면 클립보드" autocomplete="off">
-        <button class="add-btn" id="splitBtn" title="입력칸이 비어 있으면 클립보드에서 가져와 분리합니다">분리</button>
-      </div>
-
-      <div class="parsed" id="parsedWrap" hidden>
-        <div class="parsed-head">
-          <span class="seg-label">분리 결과 · 저장할 단어 선택</span>
-          <button class="link" id="selectAll">전체</button>
+    <!-- ───────── 서랍 ───────── -->
+    <section class="view drawer-view show" data-view="drawer" role="tabpanel">
+      <div class="body">
+        <div class="add-row">
+          <input id="input" type="text" placeholder="프롬프트 입력 · 비우면 클립보드" autocomplete="off">
+          <button class="add-btn" id="splitBtn" title="입력칸이 비어 있으면 클립보드에서 가져와 분리합니다">분리</button>
         </div>
-        <div class="tokens" id="tokens"></div>
-        <div class="parsed-foot">
-          <button class="btn ghost" id="cancelParse">취소</button>
-          <button class="add-btn" id="saveBtn"><span class="p">↓</span>저장 <span id="saveN"></span></button>
+
+        <div class="parsed" id="parsedWrap" hidden>
+          <div class="parsed-head">
+            <span class="seg-label">분리 결과 · 저장할 단어 선택</span>
+            <button class="link" id="selectAll">전체</button>
+          </div>
+          <div class="tokens" id="tokens"></div>
+          <div class="parsed-foot">
+            <button class="btn ghost" id="cancelParse">취소</button>
+            <button class="add-btn" id="saveBtn"><span class="p">↓</span>저장 <span id="saveN"></span></button>
+          </div>
         </div>
+
+        <div class="chips" id="chips"></div>
+
+        <div class="search" id="searchBox" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="searchInput" type="text" placeholder="검색" autocomplete="off">
+          <button class="x" id="searchClear" hidden aria-label="검색 지우기">×</button>
+        </div>
+
+        <div class="lib-head-row">
+          <div class="lib-head">내 단어</div>
+          <button class="link" id="translateAll" type="button" hidden>번역하기</button>
+        </div>
+        <div class="lib" id="lib"></div>
       </div>
 
-      <div class="chips" id="chips"></div>
-
-      <div class="search" id="searchBox" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="searchInput" type="text" placeholder="검색" autocomplete="off">
-        <button class="x" id="searchClear" hidden aria-label="검색 지우기">×</button>
+      <div class="compose is-empty" id="compose">
+        <div class="compose-top">
+          <span class="t">조합</span>
+          <span class="c" id="composeCount"></span>
+          <span class="acts">
+            <button class="btn ghost" id="clearCompose">비우기</button>
+            <button class="btn" id="copyCompose">복사</button>
+          </span>
+        </div>
+        <div class="compose-box" id="composeBox"></div>
       </div>
+    </section>
 
-      <div class="lib-head-row">
-        <div class="lib-head">내 단어</div>
-        <button class="link" id="translateAll" type="button" hidden>번역하기</button>
-      </div>
-      <div class="lib" id="lib"></div>
-    </div>
+    <!-- ───────── 평가 ───────── -->
+    <section class="view eval-view" data-view="eval" role="tabpanel" hidden>
+      <div class="eval-head">프롬프트 평가</div>
+      <textarea id="evalInput" class="eval-input" placeholder="평가받을 프롬프트를 붙여넣어 주세요" rows="4"></textarea>
+      <button class="eval-run" id="evalRun" type="button">평가하기</button>
+      <div class="eval-note">좋은 프롬프트 기준을 준비하고 있어요. 곧 점수와 항목별 피드백을 보여드릴게요.</div>
+    </section>
 
-    <div class="compose is-empty" id="compose">
-      <div class="compose-top">
-        <span class="t">조합</span>
-        <span class="c" id="composeCount"></span>
-        <span class="acts">
-          <button class="btn ghost" id="clearCompose">비우기</button>
-          <button class="btn" id="copyCompose">복사</button>
-        </span>
-      </div>
-      <div class="compose-box" id="composeBox"></div>
-    </div>
+    <!-- ───────── 참고 사이트 ───────── -->
+    <section class="view ref-view" data-view="ref" role="tabpanel" hidden>
+      <div class="ref-head">프롬프트 참고하기 좋은 사이트</div>
+      <div class="links" id="refLinks"></div>
+    </section>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -653,12 +726,22 @@
   }
   function renderCompose(){
     composeBox.innerHTML="";
-    compose.forEach((c,i)=>{
-      const seg=document.createElement("span");seg.textContent=c.en;composeBox.appendChild(seg);
-      if(i<compose.length-1){const cm=document.createElement("span");cm.className="comma";cm.textContent=", ";composeBox.appendChild(cm);}
+    compose.forEach(c=>{
+      const tok=document.createElement("span");tok.className="ctok";
+      const tx=document.createElement("span");tx.textContent=c.en;tok.appendChild(tx);
+      const x=document.createElement("button");x.type="button";x.className="x";x.setAttribute("aria-label",c.en+" 제거");x.textContent="×";
+      x.addEventListener("click",e=>{e.stopPropagation();removeFromCompose(c.id);});
+      tok.appendChild(x);
+      composeBox.appendChild(tok);
     });
     if(compose.length){composeEl.classList.remove("is-empty");composeCount.textContent=compose.length+"개";}
     else{composeEl.classList.add("is-empty");composeCount.textContent="단어를 눌러 담기";}
+  }
+  function removeFromCompose(id){
+    const i=compose.findIndex(c=>c.id===id);
+    if(i<0)return;
+    compose.splice(i,1);
+    renderChips();renderLib();renderCompose();
   }
   $("#clearCompose").addEventListener("click",()=>{compose=[];renderLib();renderCompose();});
   $("#copyCompose").addEventListener("click",()=>{
@@ -690,6 +773,44 @@
   translateAllBtn.addEventListener("click",translateAll);
 
   function renderAll(){renderChips();renderLib();renderCompose();refreshTranslateBtn();}
+
+  /* ---------- 탭 전환 ---------- */
+  (function(){
+    const tabs=[...document.querySelectorAll(".tab")];
+    const views=[...document.querySelectorAll(".view")];
+    tabs.forEach(b=>b.addEventListener("click",()=>{
+      const v=b.dataset.tab;
+      tabs.forEach(x=>{const on=x===b;x.classList.toggle("active",on);x.setAttribute("aria-selected",on?"true":"false");});
+      views.forEach(el=>{const on=el.dataset.view===v;el.classList.toggle("show",on);el.hidden=!on;});
+    }));
+  })();
+
+  /* ---------- 참고 사이트 ---------- */
+  const REF_SITES=[
+    {fav:"🎨",nm:"PromptHero",ds:"이미지 프롬프트 검색·갤러리",url:"https://prompthero.com"},
+    {fav:"🔍",nm:"Lexica",ds:"Stable Diffusion 프롬프트 탐색",url:"https://lexica.art"},
+    {fav:"🧩",nm:"Civitai",ds:"모델·프롬프트 공유 커뮤니티",url:"https://civitai.com"},
+    {fav:"📚",nm:"Prompting Guide",ds:"프롬프트 엔지니어링 가이드",url:"https://www.promptingguide.ai"},
+    {fav:"🧠",nm:"Anthropic Prompt Library",ds:"검증된 프롬프트 예시 모음",url:"https://docs.anthropic.com/en/resources/prompt-library/library"}
+  ];
+  (function(){
+    const wrap=$("#refLinks");if(!wrap)return;
+    REF_SITES.forEach(s=>{
+      const a=document.createElement("a");a.className="lk";a.href=s.url;a.target="_blank";a.rel="noopener noreferrer";
+      a.innerHTML='<span class="fav"></span><span class="meta"><span class="nm"></span><span class="ds"></span></span>'+
+        '<span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg></span>';
+      a.querySelector(".fav").textContent=s.fav;
+      a.querySelector(".nm").textContent=s.nm;
+      a.querySelector(".ds").textContent=s.ds;
+      wrap.appendChild(a);
+    });
+  })();
+
+  /* ---------- 평가 (기준 준비 중) ---------- */
+  (function(){
+    const run=$("#evalRun");if(!run)return;
+    run.addEventListener("click",()=>toast("평가 기능은 곧 추가됩니다 · 기준 반영 예정"));
+  })();
 
   /* ---------- 시작 ---------- */
   (async function init(){
