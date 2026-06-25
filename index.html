@@ -143,8 +143,13 @@
   .ind{width:13px;height:13px;border-radius:50%;border:1.6px solid var(--line);flex:none;transition:.12s}
   .row:hover .ind{border-color:var(--ind-hover)}
   .row.in .ind{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
-  .label{font-size:13px;font-weight:600;color:var(--tx);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lblwrap{display:flex;flex-direction:column;justify-content:center;flex:0 1 auto;min-width:0;gap:1px}
+  .label{font-size:13px;font-weight:600;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .label.untrans{font-style:italic;color:var(--tx-mut);font-weight:500}
+  /* 호버 시 한글 밑에 원문(회색·작은 글씨)을 즉시 펼쳐 보여줌 · 평소엔 숨겨 줄간격 유지 */
+  .sub{display:none;font-size:10.5px;font-weight:500;font-style:normal;color:var(--tx-dim);
+    line-height:1.15;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row:hover .sub:not(:empty),.row:focus-within .sub:not(:empty){display:block}
   .label[contenteditable="true"]{outline:none;background:var(--input-bg);border:1px solid var(--accent);border-radius:5px;padding:1px 5px;cursor:text;font-style:normal;color:var(--tx)}
   .cat{font-size:9.5px;font-weight:600;color:var(--tx-mut);background:var(--raise-2);border:1px solid var(--line-soft);padding:2px 7px;border-radius:999px;flex:none}
   .cnt{margin-left:auto;font-size:10.5px;color:var(--tx-dim);font-weight:600;font-variant-numeric:tabular-nums;flex:none}
@@ -762,12 +767,12 @@
       row.className="row"+(inComp?" in":"");row.dataset.id=item.id;row.tabIndex=0;row.setAttribute("role","button");
       row.innerHTML=
         '<span class="ind"></span>'+
-        '<span class="label '+(untrans?'untrans':'')+'"></span>'+
+        '<span class="lblwrap"><span class="label '+(untrans?'untrans':'')+'"></span><span class="sub"></span></span>'+
         '<span class="cat">'+item.cat+'</span>'+
         '<span class="cnt '+(item.count?'':'zero')+'">'+item.count+'</span>'+
         '<button class="kebab" aria-label="더보기"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>';
       const labelEl=row.querySelector(".label");labelEl.textContent=untrans?item.en:item.ko;
-      if(!untrans) labelEl.title=item.en;   // 호버 시 원문(영어) 표시 · 레이아웃 영향 없음
+      if(!untrans) row.querySelector(".sub").textContent=item.en;   // 호버 시 한글 밑에 원문(회색·작은 글씨)
       row.addEventListener("click",e=>{if(e.target.closest(".kebab")||labelEl.isContentEditable)return;toggleCompose(item.id);});
       row.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&!labelEl.isContentEditable){e.preventDefault();toggleCompose(item.id);}});
       labelEl.addEventListener("dblclick",e=>{e.stopPropagation();editKo(labelEl,item);});
