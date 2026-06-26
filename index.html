@@ -468,6 +468,7 @@
       sbDelete(item.id).catch(e=>{console.error(e);toast("삭제 동기화 실패");refresh();});
     });
     document.body.appendChild(m);
+    menuEl=m;
     const r=anchor.getBoundingClientRect();
     m.style.top=(r.bottom+6+scrollY)+"px";
     m.style.left=Math.min(r.right-172+scrollX,innerWidth-180)+"px";
