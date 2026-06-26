@@ -847,7 +847,8 @@
   }
 
   let menuEl=null;
-  function closeMenu(){if(menuEl){menuEl.remove();menuEl=null;}}
+  function closeMenu(){if(menuEl){menuEl.remove();menuEl=null;document.removeEventListener("click",onDocClick,true);}}
+  function onDocClick(e){if(menuEl&&menuEl.contains(e.target))return;closeMenu();}
   function openMenu(anchor,labelEl,item){
     closeMenu();
     const m=document.createElement("div");m.className="menu";
@@ -868,7 +869,7 @@
     const r=anchor.getBoundingClientRect();
     m.style.top=(r.bottom+6+scrollY)+"px";
     m.style.left=Math.min(r.right-172+scrollX,innerWidth-180)+"px";
-    setTimeout(()=>document.addEventListener("click",closeMenu,{once:true}),0);
+    setTimeout(()=>document.addEventListener("click",onDocClick,true),0);
   }
 
   /* ---------- 조합 ---------- */
