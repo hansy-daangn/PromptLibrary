@@ -50,7 +50,7 @@
     color:var(--tx);display:flex;align-items:flex-start;justify-content:center;padding:28px 16px 60px;-webkit-font-smoothing:antialiased;
     transition:background .25s ease;
   }
-  .panel{width:380px;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .panel{width:min(94vw,800px);background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
 
   .status{font-size:10.5px;font-weight:600;text-align:center;padding:6px 10px;border-bottom:1px solid var(--line-soft);line-height:1.4}
   .status.demo{color:#cf935f;background:rgba(194,86,11,.08)}
@@ -131,7 +131,7 @@
   .lib-head{font-size:10px;color:var(--tx-dim);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
   #translateAll{color:var(--accent-soft);font-weight:700}
   #translateAll:hover{background:var(--accent-tint)}
-  .lib{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow:auto;margin:0 -4px;padding:0 4px}
+  .lib{display:flex;flex-direction:column;gap:2px;max-height:min(60vh,520px);overflow:auto;margin:0 -4px;padding:0 4px}
   .lib::-webkit-scrollbar{width:8px}
   .lib::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:8px;border:2px solid var(--bg)}
 
@@ -148,6 +148,9 @@
   /* 원문(영어)을 같은 줄 오른쪽에 회색으로 상시 표시 · 공간 부족 시 영문만 말줄임 */
   .enr{margin-left:auto;padding-left:12px;flex:0 1 auto;min-width:0;font-size:10px;color:var(--tx-dim);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 영문이 잘린(.ellip) 행만: 호버 시 한글 감추고 영문 전체를 그 자리에 표시 (행 높이는 그대로) */
+  .row.ellip:hover .label,.row.ellip:focus-within .label{display:none}
+  .row.ellip:hover .enr,.row.ellip:focus-within .enr{margin-left:0;padding-left:0;flex:1 1 auto;color:var(--tx)}
   .label[contenteditable="true"]{outline:none;background:var(--input-bg);border:1px solid var(--accent);border-radius:5px;padding:1px 5px;cursor:text;font-style:normal;color:var(--tx)}
   .cat{font-size:9.5px;font-weight:600;color:var(--tx-mut);background:var(--raise-2);border:1px solid var(--line-soft);padding:2px 7px;border-radius:999px;flex:none}
   .cnt{font-size:10.5px;color:var(--tx-dim);font-weight:600;font-variant-numeric:tabular-nums;flex:none}
@@ -776,7 +779,10 @@
       row.querySelector(".kebab").addEventListener("click",e=>{e.stopPropagation();openMenu(e.currentTarget,labelEl,item);});
       libEl.appendChild(row);
     });
+    // 영문이 실제로 잘린 행만 .ellip 표시 → 호버 시 한글 숨기고 영문 전체 노출
+    [...libEl.children].forEach(r=>{const e=r.querySelector(".enr");if(e&&e.textContent&&e.scrollWidth>e.clientWidth+1)r.classList.add("ellip");});
   }
+  let _rzT; window.addEventListener("resize",()=>{clearTimeout(_rzT);_rzT=setTimeout(renderLib,150);});
   function flashRow(id){const r=libEl.querySelector('.row[data-id="'+id+'"]');if(r){r.classList.add("flash");setTimeout(()=>r.classList.remove("flash"),420);}}
 
   function editKo(labelEl,item){
