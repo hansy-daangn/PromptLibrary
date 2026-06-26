@@ -131,35 +131,24 @@
   .lib-head{font-size:10px;color:var(--tx-dim);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
   #translateAll{color:var(--accent-soft);font-weight:700}
   #translateAll:hover{background:var(--accent-tint)}
-  .lib{display:flex;flex-direction:column;gap:2px;max-height:min(60vh,520px);overflow:auto;margin:0 -4px;padding:0 4px}
-  .lib::-webkit-scrollbar{width:8px}
-  .lib::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:8px;border:2px solid var(--bg)}
+  .lib{display:flex;flex-wrap:wrap;align-items:stretch;gap:7px}
 
-  .row{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:background .12s,border-color .12s}
-  .row:hover{background:var(--raise);border-color:var(--line-soft)}
-  .row:focus-visible{outline:2px solid var(--accent-bright);outline-offset:-1px}
-  .row.in{background:var(--accent-tint);border-color:rgba(194,86,11,.35)}
+  /* 단어 = 은은한 회색 채움 칩(테두리 없음) · 한글 위·영문 아래(작게) · 줄바꿈으로 배치 */
+  .row{position:relative;display:flex;align-items:center;gap:5px;max-width:280px;
+    background:var(--raise);border:0;border-radius:10px;padding:6px 10px;cursor:pointer;transition:background .12s}
+  .row:hover{background:var(--raise-2)}
+  .row:focus-visible{outline:2px solid var(--accent-bright);outline-offset:1px}
+  .row.in{background:var(--accent-tint)}
   .row.flash{background:var(--accent-tint-2)}
-  .ind{width:13px;height:13px;border-radius:50%;border:1.6px solid var(--line);flex:none;transition:.12s}
-  .row:hover .ind{border-color:var(--ind-hover)}
-  .row.in .ind{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
-  .label{font-size:12px;font-weight:600;color:var(--tx);flex:none;white-space:nowrap}   /* 한글은 절대 말줄임 안 함 */
+  .txt{display:flex;flex-direction:column;min-width:0}
+  .label{font-size:12px;font-weight:600;color:var(--tx);line-height:1.3;overflow-wrap:anywhere}
   .label.untrans{font-style:italic;color:var(--tx-mut);font-weight:500}
-  /* 원문(영어)을 같은 줄 오른쪽에 회색으로 상시 표시 · 공간 부족 시 영문만 말줄임 */
-  .enr{margin-left:auto;padding-left:12px;flex:0 1 auto;min-width:0;font-size:10px;color:var(--tx-dim);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  /* 영문이 잘린(.ellip) 행만: 호버 시 한글 감추고 영문 전체를 그 자리에 표시 (행 높이는 그대로) */
-  .row.ellip:hover .label,.row.ellip:focus-within .label{display:none}
-  .row.ellip:hover .enr,.row.ellip:focus-within .enr{margin-left:0;padding-left:0;flex:1 1 auto;color:var(--tx)}
+  .enr{font-size:9px;color:var(--tx-dim);line-height:1.18;overflow-wrap:anywhere}
   .label[contenteditable="true"]{outline:none;background:var(--input-bg);border:1px solid var(--accent);border-radius:5px;padding:1px 5px;cursor:text;font-style:normal;color:var(--tx)}
-  .cat{font-size:9.5px;font-weight:600;color:var(--tx-mut);background:var(--raise-2);border:1px solid var(--line-soft);padding:2px 7px;border-radius:999px;flex:none}
-  .cnt{font-size:10.5px;color:var(--tx-dim);font-weight:600;font-variant-numeric:tabular-nums;flex:none}
-  .cnt.zero{display:none}
-  .kebab{margin-left:6px;appearance:none;border:0;background:none;color:var(--tx-dim);cursor:pointer;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;opacity:0;transition:opacity .12s}
+  .kebab{flex:none;align-self:flex-start;margin-top:-1px;appearance:none;border:0;background:none;color:var(--tx-dim);cursor:pointer;width:16px;height:18px;border-radius:5px;display:grid;place-items:center;opacity:0;transition:opacity .12s}
   .row:hover .kebab,.row:focus-within .kebab{opacity:1}
-  .kebab:hover{background:var(--raise-2);color:var(--tx)}
-  .kebab svg{width:14px;height:14px}
-  .row .cnt.zero + .kebab{margin-left:auto}
+  .kebab:hover{color:var(--tx)}
+  .kebab svg{width:13px;height:13px}
 
   .menu{position:absolute;z-index:40;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:var(--shadow);width:172px}
   .menu .mi{appearance:none;border:0;background:none;color:var(--tx-mut);font:inherit;font-size:11.5px;text-align:left;width:100%;padding:7px 9px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px}
@@ -767,22 +756,17 @@
       const row=document.createElement("div");
       row.className="row"+(inComp?" in":"");row.dataset.id=item.id;row.tabIndex=0;row.setAttribute("role","button");
       row.innerHTML=
-        '<span class="ind"></span>'+
-        '<span class="label '+(untrans?'untrans':'')+'"></span>'+
-        '<span class="enr"></span>'+
+        '<span class="txt"><span class="label '+(untrans?'untrans':'')+'"></span><span class="enr"></span></span>'+
         '<button class="kebab" aria-label="더보기"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>';
       const labelEl=row.querySelector(".label");labelEl.textContent=untrans?item.en:item.ko;
-      if(!untrans) row.querySelector(".enr").textContent=item.en;   // 원문(영어) 같은 줄 오른쪽에 회색 상시 표시
+      if(!untrans) row.querySelector(".enr").textContent=item.en;   // 한글 밑에 원문(영어) 작게 상시 표시
       row.addEventListener("click",e=>{if(e.target.closest(".kebab")||labelEl.isContentEditable)return;toggleCompose(item.id);});
       row.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&!labelEl.isContentEditable){e.preventDefault();toggleCompose(item.id);}});
       labelEl.addEventListener("dblclick",e=>{e.stopPropagation();editKo(labelEl,item);});
       row.querySelector(".kebab").addEventListener("click",e=>{e.stopPropagation();openMenu(e.currentTarget,labelEl,item);});
       libEl.appendChild(row);
     });
-    // 영문이 실제로 잘린 행만 .ellip 표시 → 호버 시 한글 숨기고 영문 전체 노출
-    [...libEl.children].forEach(r=>{const e=r.querySelector(".enr");if(e&&e.textContent&&e.scrollWidth>e.clientWidth+1)r.classList.add("ellip");});
   }
-  let _rzT; window.addEventListener("resize",()=>{clearTimeout(_rzT);_rzT=setTimeout(renderLib,150);});
   function flashRow(id){const r=libEl.querySelector('.row[data-id="'+id+'"]');if(r){r.classList.add("flash");setTimeout(()=>r.classList.remove("flash"),420);}}
 
   function editKo(labelEl,item){
