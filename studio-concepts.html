@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>프롬프트 스튜디오 · 디자인 방향 3안</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  /* =====================================================================
+     디자인 방향 3안 — 같은 화면(작성하기)을 세 가지 방향으로 렌더해 비교
+     A. Soft Studio   — 부드럽고 친근한, 둥근 카드 + 파스텔
+     B. Mono Terminal — 프롬프트 엔지니어링 네이티브, 모노 + 그리드 + 시그널 컬러
+     C. Neo-Brutalist — 굵은 테두리 + 하드 섀도우 + 강한 단색, 또렷하고 자신감
+     (현재 배포본은 'Quiet Editorial' 방향입니다. 아래 3안은 대안입니다.)
+     ===================================================================== */
+  :root{ --ui:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif;
+         --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,"Cascadia Code","Roboto Mono",monospace; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--ui);background:#f4f3ef;color:#262320;-webkit-font-smoothing:antialiased}
+
+  /* ── 페이지 셸(밝게) ── */
+  .page{max-width:1180px;margin:0 auto;padding:34px 22px 90px}
+  .page-head{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+  .page-head h1{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:0}
+  .page-head p{margin:0;font-size:13px;color:#6c665d;line-height:1.6;max-width:760px}
+  .switch{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:8px;padding:16px 0 18px;background:#f4f3ef;margin-bottom:10px}
+  .switch button{appearance:none;border:1px solid #d8d2c9;background:#fff;color:#6c665d;font:inherit;font-size:13px;font-weight:650;
+    padding:9px 16px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:.15s}
+  .switch button .dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+  .switch button:hover{border-color:#a89f93;color:#262320}
+  .switch button.on{background:#262320;color:#f4f3ef;border-color:#262320}
+  .switch button .lab{font-size:11px;font-weight:500;opacity:.7}
+  .switch button.on .lab{opacity:.6}
+
+  .stage{display:none}
+  .stage.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .stage-desc{font-size:13px;color:#6c665d;line-height:1.7;margin:0 0 16px;padding-left:14px;border-left:2px solid #d8d2c9}
+  .stage-desc b{color:#262320;font-weight:700}
+  .frame{border-radius:18px;overflow:hidden;border:1px solid #e0dcd4;box-shadow:0 24px 60px -36px rgba(40,36,30,.4)}
+
+  /* ====================== 공통 목업 골격(스코프 .mock) ====================== */
+  .mock{padding:0;font-size:13px;line-height:1.5}
+  .mock .m-top{display:flex;align-items:center;gap:16px}
+  .mock .m-brand{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
+  .mock .m-brand::before{content:"";width:7px;height:7px;border-radius:50%;flex:none}
+  .mock .m-tabs{display:flex;gap:14px}
+  .mock .m-tabs b{font-weight:700}
+  .mock .m-tabs span{font-weight:600}
+  .mock .m-input{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .mock .m-ph{flex:1}
+  .mock .m-label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .mock .m-presets{display:flex;flex-wrap:wrap;gap:8px}
+  .mock .m-chip{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+  .mock .m-chip i{font-style:normal;font-variant-numeric:tabular-nums;font-size:10.5px}
+  .mock .m-cats{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;font-size:12px;font-weight:600}
+  .mock .m-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+  .mock .m-w{display:flex;align-items:center;gap:8px;cursor:pointer}
+  .mock .m-w .we{font-family:var(--mono);font-weight:550;letter-spacing:-.01em}
+  .mock .m-w .wk{font-size:10.5px}
+  .mock .m-w .tick{margin-left:auto;font-size:12px}
+  .mock .m-dock{margin-top:4px}
+  .mock .m-dock-top{display:flex;align-items:center;gap:10px}
+  .mock .m-dock-top .acts{margin-left:auto;display:flex;gap:8px}
+  .mock .m-toks{display:flex;flex-wrap:wrap;gap:8px}
+  .mock .m-tok{display:inline-flex;align-items:center;gap:8px}
+  .mock .m-tok i{font-style:normal;font-size:9.5px}
+  .mock .m-prev{font-family:var(--mono);font-size:11px}
+
+  /* ============================ A · Soft Studio ============================ */
+  .c-a .mock{background:#fbf9f7;color:#3a3747;padding:22px}
+  .c-a .m-top{margin-bottom:20px}
+  .c-a .m-brand{color:#3a3747;font-size:14px}
+  .c-a .m-brand::before{background:#6470e6}
+  .c-a .m-tabs b{color:#3a3747}
+  .c-a .m-tabs span{color:#a6a3b4}
+  .c-a .m-spacer{margin-left:auto}
+  .c-a .m-input{background:#fff;border-radius:16px;padding:7px 7px 7px 18px;box-shadow:0 6px 18px -10px rgba(80,70,120,.3),0 1px 3px rgba(80,70,120,.08);margin-bottom:24px}
+  .c-a .m-ph{color:#a6a3b4;font-size:13.5px}
+  .c-a .m-add{border:0;background:#6470e6;color:#fff;font:inherit;font-weight:700;font-size:12.5px;padding:11px 18px;border-radius:12px;box-shadow:0 6px 16px -6px rgba(100,112,230,.6)}
+  .c-a .m-label{color:#b3b0c0;margin:0 0 12px}
+  .c-a .m-presets{margin-bottom:24px}
+  .c-a .m-chip{background:#fff;color:#6b6880;border-radius:999px;padding:9px 15px;font-weight:600;box-shadow:0 3px 10px -6px rgba(80,70,120,.3)}
+  .c-a .m-chip i{color:#b3b0c0}
+  .c-a .m-chip.rec{background:#fff1e8;color:#d2723e;box-shadow:0 4px 14px -6px rgba(210,114,62,.4)}
+  .c-a .m-chip.rec i{color:#e0935f}
+  .c-a .m-chip.applied{background:#6470e6;color:#fff;box-shadow:0 6px 16px -6px rgba(100,112,230,.6)}
+  .c-a .m-chip.applied i{color:#cfd3f7}
+  .c-a .m-chip.save{background:none;border:1.5px dashed #d7d4e2;color:#b3b0c0;box-shadow:none}
+  .c-a .m-cats{margin-bottom:14px;color:#a6a3b4}
+  .c-a .m-cats b{color:#6470e6}
+  .c-a .m-grid{margin-bottom:24px}
+  .c-a .m-w{background:#fff;border-radius:14px;padding:11px 14px;box-shadow:0 3px 10px -7px rgba(80,70,120,.3)}
+  .c-a .m-w .we{color:#3a3747;font-size:12.5px}
+  .c-a .m-w .wk{color:#9a96aa}
+  .c-a .m-w.in{background:#eef0fe}
+  .c-a .m-w.in .we{color:#6470e6}
+  .c-a .m-w .tick{color:#6470e6;display:none}
+  .c-a .m-w.in .tick{display:block}
+  .c-a .m-dock{background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 10px 30px -16px rgba(80,70,120,.35)}
+  .c-a .m-dock-top{margin-bottom:12px}
+  .c-a .m-dock-top b{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#b3b0c0}
+  .c-a .m-dock-top .c{color:#a6a3b4;font-size:11px}
+  .c-a .m-dock-top .acts button{border:0;font:inherit;font-weight:700;font-size:12px;padding:9px 15px;border-radius:11px;background:#f0eef7;color:#8a8699}
+  .c-a .m-dock-top .acts .copy{background:#6470e6;color:#fff}
+  .c-a .m-toks{margin-bottom:12px}
+  .c-a .m-tok{background:#f4f3fa;border-radius:11px;padding:6px 8px 6px 12px;color:#3a3747}
+  .c-a .m-tok .te{font-family:var(--mono);font-weight:550;font-size:12px}
+  .c-a .m-tok i{color:#a6a3b4}
+  .c-a .m-prev{color:#9a96aa;border-top:1px dashed #ece9f3;padding-top:11px}
+
+  /* ============================ B · Mono Terminal ============================ */
+  .c-b .mock{background:#0c0e0d;color:#cdd6cf;padding:22px;font-family:var(--mono)}
+  .c-b .m-top{margin-bottom:20px;border-bottom:1px solid #1d2420;padding-bottom:14px}
+  .c-b .m-brand{color:#e6efe7;font-family:var(--mono);font-size:13px;letter-spacing:-.02em}
+  .c-b .m-brand::before{background:#7dff9b;box-shadow:0 0 8px #7dff9b}
+  .c-b .m-tabs{font-family:var(--mono)}
+  .c-b .m-tabs b{color:#7dff9b}
+  .c-b .m-tabs b::before{content:"› "}
+  .c-b .m-tabs span{color:#5c6960}
+  .c-b .m-spacer{margin-left:auto}
+  .c-b .m-input{border:1px solid #243029;background:#0f1411;border-radius:3px;padding:11px 11px 11px 14px;margin-bottom:24px}
+  .c-b .m-ph{color:#5c6960;font-family:var(--mono)}
+  .c-b .m-ph::before{content:"$ ";color:#7dff9b}
+  .c-b .m-add{border:1px solid #2f7d4a;background:#10241a;color:#7dff9b;font-family:var(--mono);font-weight:600;font-size:12px;padding:8px 14px;border-radius:3px}
+  .c-b .m-label{color:#5c6960;margin:0 0 12px;font-family:var(--mono)}
+  .c-b .m-label::before{content:"// "}
+  .c-b .m-presets{margin-bottom:24px}
+  .c-b .m-chip{border:1px solid #243029;background:#0f1411;color:#9fb0a4;border-radius:3px;padding:8px 12px;font-family:var(--mono);font-size:12px}
+  .c-b .m-chip i{color:#5c6960}
+  .c-b .m-chip.rec{border-color:#7a5a1e;background:#1a140a;color:#f0b54b}
+  .c-b .m-chip.rec i{color:#c79233}
+  .c-b .m-chip.applied{border-color:#2f7d4a;background:#10241a;color:#7dff9b}
+  .c-b .m-chip.applied i{color:#54a06b}
+  .c-b .m-chip.save{border-style:dashed;color:#5c6960}
+  .c-b .m-cats{margin-bottom:14px;color:#5c6960;font-family:var(--mono);font-size:11.5px}
+  .c-b .m-cats b{color:#cdd6cf}
+  .c-b .m-cats b::after{content:" *"}
+  .c-b .m-grid{margin-bottom:24px;gap:1px;background:#1d2420;border:1px solid #1d2420;border-radius:3px;overflow:hidden}
+  .c-b .m-w{background:#0c0e0d;padding:10px 12px}
+  .c-b .m-w .we{color:#cdd6cf;font-size:12px}
+  .c-b .m-w .wk{color:#5c6960;font-family:var(--ui)}
+  .c-b .m-w.in{background:#10241a}
+  .c-b .m-w.in .we{color:#7dff9b}
+  .c-b .m-w .tick{color:#7dff9b;display:none}
+  .c-b .m-w.in .tick{display:block}
+  .c-b .m-dock{border:1px solid #243029;background:#0f1411;border-radius:3px;padding:14px 16px}
+  .c-b .m-dock-top{margin-bottom:12px}
+  .c-b .m-dock-top b{color:#5c6960;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+  .c-b .m-dock-top b::before{content:"// "}
+  .c-b .m-dock-top .c{color:#5c6960;font-size:11px}
+  .c-b .m-dock-top .acts button{border:1px solid #243029;background:none;color:#9fb0a4;font-family:var(--mono);font-weight:600;font-size:11.5px;padding:7px 13px;border-radius:3px}
+  .c-b .m-dock-top .acts .copy{border-color:#2f7d4a;background:#10241a;color:#7dff9b}
+  .c-b .m-toks{margin-bottom:12px}
+  .c-b .m-tok{border:1px solid #243029;background:#0c0e0d;border-radius:3px;padding:5px 7px 5px 10px;color:#cdd6cf}
+  .c-b .m-tok .te{font-family:var(--mono);font-size:12px}
+  .c-b .m-tok i{color:#5c6960;font-family:var(--ui)}
+  .c-b .m-prev{color:#54a06b;border-top:1px dashed #243029;padding-top:11px}
+  .c-b .m-prev::before{content:"> ";color:#5c6960}
+
+  /* ============================ C · Neo-Brutalist ============================ */
+  .c-c .mock{background:#f6f1e4;color:#16130c;padding:24px}
+  .c-c .m-top{margin-bottom:22px}
+  .c-c .m-brand{color:#16130c;font-size:15px;font-weight:800;letter-spacing:-.02em}
+  .c-c .m-brand::before{width:14px;height:14px;border-radius:0;background:#ffd23e;border:2px solid #16130c}
+  .c-c .m-tabs b{color:#16130c;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:5px}
+  .c-c .m-tabs span{color:#7a745f}
+  .c-c .m-spacer{margin-left:auto}
+  .c-c .m-input{background:#fff;border:2.5px solid #16130c;border-radius:4px;padding:9px 9px 9px 16px;box-shadow:4px 4px 0 #16130c;margin-bottom:26px}
+  .c-c .m-ph{color:#8a8470;font-weight:500}
+  .c-c .m-add{border:2.5px solid #16130c;background:#ffd23e;color:#16130c;font:inherit;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:4px;box-shadow:2px 2px 0 #16130c}
+  .c-c .m-label{color:#16130c;margin:0 0 13px;font-weight:800}
+  .c-c .m-presets{margin-bottom:26px}
+  .c-c .m-chip{background:#fff;border:2px solid #16130c;color:#16130c;border-radius:4px;padding:8px 13px;font-weight:700;box-shadow:2px 2px 0 #16130c}
+  .c-c .m-chip i{color:#7a745f}
+  .c-c .m-chip.rec{background:#ff9e3d}
+  .c-c .m-chip.rec i{color:#5e3a12}
+  .c-c .m-chip.applied{background:#16130c;color:#f6f1e4}
+  .c-c .m-chip.applied i{color:#b7b09a}
+  .c-c .m-chip.save{background:none;border-style:dashed;box-shadow:none;color:#7a745f}
+  .c-c .m-cats{margin-bottom:16px;color:#7a745f;font-weight:700}
+  .c-c .m-cats b{color:#16130c;background:#ffd23e;padding:2px 7px;border:2px solid #16130c;border-radius:3px}
+  .c-c .m-grid{margin-bottom:26px;gap:10px}
+  .c-c .m-w{background:#fff;border:2px solid #16130c;border-radius:4px;padding:10px 13px;box-shadow:2px 2px 0 #16130c}
+  .c-c .m-w .we{color:#16130c;font-size:12.5px;font-weight:650}
+  .c-c .m-w .wk{color:#7a745f;font-weight:500}
+  .c-c .m-w.in{background:#ffd23e}
+  .c-c .m-w.in .we{color:#16130c}
+  .c-c .m-w .tick{color:#16130c;display:none;font-weight:800}
+  .c-c .m-w.in .tick{display:block}
+  .c-c .m-dock{background:#fff;border:2.5px solid #16130c;border-radius:6px;padding:16px 18px;box-shadow:5px 5px 0 #16130c}
+  .c-c .m-dock-top{margin-bottom:13px}
+  .c-c .m-dock-top b{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#16130c;font-weight:800}
+  .c-c .m-dock-top .c{color:#7a745f;font-weight:700;font-size:11px}
+  .c-c .m-dock-top .acts button{border:2px solid #16130c;font:inherit;font-weight:800;font-size:12px;padding:8px 14px;border-radius:4px;background:#fff;color:#16130c;box-shadow:2px 2px 0 #16130c}
+  .c-c .m-dock-top .acts .copy{background:#16130c;color:#ffd23e}
+  .c-c .m-toks{margin-bottom:13px}
+  .c-c .m-tok{background:#f6f1e4;border:2px solid #16130c;border-radius:4px;padding:5px 7px 5px 11px;color:#16130c}
+  .c-c .m-tok .te{font-family:var(--mono);font-weight:650;font-size:12px}
+  .c-c .m-tok i{color:#7a745f}
+  .c-c .m-prev{color:#7a745f;border-top:2px dashed #d8d1bd;padding-top:12px;font-weight:500}
+
+  @media (max-width:560px){ .mock .m-grid{grid-template-columns:1fr 1fr} }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-head">
+      <h1>프롬프트 스튜디오 · 디자인 방향 3안</h1>
+      <p>같은 <b>작성하기</b> 화면을 세 가지 방향으로 렌더한 시안입니다. 현재 배포본은 절제된 <b>Quiet Editorial</b> 방향이고, 아래 셋은 “이런 방향도 가능하다”는 대안 제안이에요. 위 칩으로 전환하세요.</p>
+    </div>
+
+    <div class="switch" id="switch">
+      <button class="on" data-stage="a" style="--d:#6470e6"><span class="dot" style="background:#6470e6"></span>A · Soft Studio <span class="lab">친근·부드러움</span></button>
+      <button data-stage="b" style="--d:#7dff9b"><span class="dot" style="background:#7dff9b"></span>B · Mono Terminal <span class="lab">기술·정밀</span></button>
+      <button data-stage="c" style="--d:#ffd23e"><span class="dot" style="background:#ffd23e"></span>C · Neo-Brutalist <span class="lab">강렬·또렷</span></button>
+    </div>
+
+    <section class="stage on" data-stage="a">
+      <p class="stage-desc"><b>A · Soft Studio.</b> 흰 카드 + 부드러운 그림자 + 둥근 모서리 + 페리윙클 강조색. 위협적이지 않고 친근한, 일반 사용자용 앱 느낌. 시각적 구분을 ‘부드러운 입체감’으로 처리합니다.</p>
+      <div class="frame c-a"><div class="mock" data-mock></div></div>
+    </section>
+    <section class="stage" data-stage="b">
+      <p class="stage-desc"><b>B · Mono Terminal.</b> 모노스페이스 + 그리드 라인 + 단일 시그널 그린. 프롬프트 엔지니어링에 가장 ‘네이티브’한 개발자 도구 톤. 밀도 높고 정밀하며, 영문 토큰이 코드처럼 읽힙니다.</p>
+      <div class="frame c-b"><div class="mock" data-mock></div></div>
+    </section>
+    <section class="stage" data-stage="c">
+      <p class="stage-desc"><b>C · Neo-Brutalist.</b> 굵은 검정 테두리 + 하드 오프셋 섀도우(블러 없음) + 강한 옐로/오렌지 단색. 가장 또렷하고 기억에 남는, 자신감 있는 방향. 위계와 구분이 면·테두리로 분명합니다.</p>
+      <div class="frame c-c"><div class="mock" data-mock></div></div>
+    </section>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  // 세 시안이 공유하는 동일 콘텐츠(작성하기 화면)
+  var words=[
+    ["golden hour","골든아워",1],["backlight","역광",0],["85mm","85mm",1],["bokeh","보케",0],
+    ["cinematic","영화 같은",0],["anamorphic","아나모픽",0],["handheld","핸드헬드",1],["warm tones","따뜻한 톤",0]
+  ];
+  var toks=[["golden hour","골든아워"],["85mm","85mm"],["handheld","핸드헬드"]];
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+  function tmpl(){
+    var grid=words.map(function(w){
+      return '<div class="m-w'+(w[2]?' in':'')+'"><span class="wtx" style="display:flex;flex-direction:column;gap:1px;min-width:0">'+
+        '<span class="we">'+esc(w[0])+'</span><span class="wk">'+esc(w[1])+'</span></span><span class="tick">✓</span></div>';
+    }).join("");
+    var tk=toks.map(function(t){
+      return '<span class="m-tok"><span class="te">'+esc(t[0])+'</span><i>'+esc(t[1])+'</i></span>';
+    }).join("");
+    return ''+
+    '<div class="m-top"><span class="m-brand">프롬프트 스튜디오</span>'+
+      '<span class="m-tabs"><b>작성하기</b><span>가져오기</span></span><span class="m-spacer"></span></div>'+
+    '<div class="m-input"><span class="m-ph">단어 입력 후 Enter로 담기 · 자동완성</span><button class="m-add">+ 담기</button></div>'+
+    '<div class="m-label">프리셋 세트</div>'+
+    '<div class="m-presets">'+
+      '<span class="m-chip">스냅샷 세트 <i>0/8</i></span>'+
+      '<span class="m-chip rec">아이폰 사진 세트 <i>4/7</i></span>'+
+      '<span class="m-chip applied">셀피 영상 세트 <i>7/7</i></span>'+
+      '<span class="m-chip">시네마틱 영상 세트 <i>0/8</i></span>'+
+      '<span class="m-chip save">+ 현재 조합 저장</span>'+
+    '</div>'+
+    '<div class="m-label">단어장</div>'+
+    '<div class="m-cats"><b>전체</b><span>인물 208</span><span>카메라·구도 91</span><span>스타일 75</span><span>조명 40</span><span>분위기 29</span></div>'+
+    '<div class="m-grid">'+grid+'</div>'+
+    '<div class="m-dock"><div class="m-dock-top"><b>조합</b><span class="c">3개</span>'+
+      '<span class="acts"><button>비우기</button><button class="copy">복사</button></span></div>'+
+      '<div class="m-toks">'+tk+'</div>'+
+      '<div class="m-prev">golden hour, 85mm, handheld</div></div>';
+  }
+  var html=tmpl();
+  [].forEach.call(document.querySelectorAll("[data-mock]"),function(el){ el.innerHTML=html; });
+
+  var btns=[].slice.call(document.querySelectorAll("#switch button"));
+  var stages=[].slice.call(document.querySelectorAll(".stage"));
+  btns.forEach(function(b){ b.addEventListener("click",function(){
+    var s=b.dataset.stage;
+    btns.forEach(function(x){x.classList.toggle("on",x===b);});
+    stages.forEach(function(st){st.classList.toggle("on",st.dataset.stage===s);});
+    window.scrollTo({top:0,behavior:"smooth"});
+  });});
+})();
+</script>
+</body>
+</html>
