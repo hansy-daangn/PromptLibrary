@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>구성요소 시안 · 프롬프트 스튜디오</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  /* 구성요소 시안 — 모든 요소 무테두리. 각 시안은 실제 우수 UI(Linear/Notion/Vercel/Raycast/Things/Stripe/Apple 등)를 모방.
+     비교용이라 시안마다 톤/강조색은 다를 수 있으나, 각 시안은 개별적으로 미니멀·깔끔·무테두리를 지킴. */
+  :root{
+    --ui:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --page:#f1f0ee; --ink:#1d1d1f; --ink-soft:#6b6b70; --ink-faint:#a3a3a8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--page);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;border:0;background:none;-webkit-appearance:none;appearance:none;cursor:pointer}
+  input{font-family:inherit;border:0;-webkit-appearance:none;appearance:none}
+  a{color:inherit}
+
+  .kit-head{max-width:1180px;margin:0 auto;padding:44px 28px 8px}
+  .kit-back{display:inline-block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:18px;text-decoration:none}
+  .kit-back:hover{color:var(--ink)}
+  .kit-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
+  .kit-head p{font-size:13px;color:var(--ink-soft);margin:0;max-width:640px;line-height:1.7}
+  .kit{max-width:1180px;margin:0 auto;padding:8px 28px 100px}
+
+  .cmp{margin-top:56px}
+  .cmp-h{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
+  .cmp-h h2{font-size:15px;font-weight:750;letter-spacing:-.01em;margin:0}
+  .cmp-h span{font-size:12px;color:var(--ink-faint)}
+  .vrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:16px}
+  .v{margin:0}
+  .v figcaption{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:650;color:var(--ink-soft);margin:0 2px 8px}
+  .v figcaption b{font-weight:750;color:var(--ink)}
+  .v figcaption .tag{font-size:10px;font-weight:600;color:var(--ink-faint)}
+  .stage{background:#fbfbfa;border-radius:14px;padding:16px;min-height:96px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 3px rgba(20,20,24,.05),0 8px 24px -16px rgba(20,20,24,.12)}
+  .stage.dark{background:#1a1a1c}
+  .stage.tall{min-height:150px}
+
+  /* ============ 사이드바 · 내비 ============ */
+  .nv{display:flex;flex-direction:column;gap:2px}
+  .nv a{display:flex;align-items:center;gap:9px;text-decoration:none;border-radius:7px;transition:background .12s}
+  .nv .dot{width:15px;height:15px;border-radius:4px;background:currentColor;opacity:.55;flex:none}
+  .nv .meta{margin-left:auto;font-size:11px;opacity:.6}
+  /* Linear */
+  .nv-linear a{height:30px;padding:0 8px;font-size:13px;font-weight:500;color:#5c5c5c}
+  .nv-linear a:hover{background:#f0f0ef}
+  .nv-linear a.on{background:#eaeaea;color:#1a1a1a;font-weight:600}
+  /* Notion */
+  .nv-notion a{height:28px;padding:0 6px;font-size:14px;font-weight:500;color:#6b6b65}
+  .nv-notion a:hover{background:#efeeec}
+  .nv-notion a.on{background:#e8e7e3;color:#37352f}
+  /* Vercel */
+  .nv-vercel a{height:36px;padding:0 12px;font-size:14px;font-weight:500;color:#666}
+  .nv-vercel a:hover{background:#f1f1f1}
+  .nv-vercel a.on{background:#ededed;color:#000;font-weight:600}
+  /* Raycast */
+  .nv-raycast a{height:32px;padding:0 10px;font-size:13px;font-weight:500;color:#6e655c}
+  .nv-raycast a:hover{background:#ece8e2}
+  .nv-raycast a.on{background:#e3ddd4;color:#2b251f;font-weight:600}
+  .nv-raycast .meta{font-family:var(--mono)}
+
+  /* ============ 프리셋 리스트 ============ */
+  .ls{display:flex;flex-direction:column;gap:2px}
+  .ls .row{display:flex;align-items:center;border-radius:8px;transition:background .12s}
+  .ls .row .ct{margin-left:auto;font-variant-numeric:tabular-nums}
+  /* Things 3 */
+  .ls-things .row{height:38px;padding:0 14px}
+  .ls-things .row .lb{font-size:15px;color:#2c2c2c}
+  .ls-things .row .ct{font-size:14px;color:#b0b0ab}
+  .ls-things .row:hover{background:#f2f0ea}
+  .ls-things .row.on{background:#ececdf}
+  .ls-things .row.rec{background:#fbf6e8}.ls-things .row.rec .lb{color:#8a6d1f}
+  /* Superhuman */
+  .ls-super .row{height:34px;padding:0 12px}
+  .ls-super .row .lb{font-size:13px;font-weight:500;color:#3a3f44}
+  .ls-super .row .ct{font-size:11px;font-weight:600;color:#8a9097;background:#eef0f2;padding:1px 7px;border-radius:10px}
+  .ls-super .row:hover{background:#f3f5f6}
+  .ls-super .row.on{background:#e9edf0}.ls-super .row.on .lb{color:#16191c;font-weight:600}
+  .ls-super .row.rec .ct{background:#e4ecff;color:#3b6fe0}
+  /* Height */
+  .ls-height .row{height:40px;padding:0 16px}
+  .ls-height .row .lb{font-size:14px;font-weight:500;color:#4a4a4a}
+  .ls-height .row .ct{font-size:13px;color:#bcbcbc}
+  .ls-height .row:hover{background:#f4f4f4}
+  .ls-height .row.on{background:#ebebeb}.ls-height .row.on .lb{color:#1c1c1c;font-weight:600}
+  .ls-height .row.rec{background:#f0f4ff}.ls-height .row.rec .lb{color:#2d5bd0;font-weight:600}
+  /* Stripe */
+  .ls-stripe .row{height:44px;padding:8px 14px}
+  .ls-stripe .row .lb{font-size:14px;font-weight:500;color:#3c4257}
+  .ls-stripe .row .ct{font-size:13px;font-weight:500;color:#a3acb9}
+  .ls-stripe .row:hover{background:#f6f8fa}
+  .ls-stripe .row.on{background:#eef1f5}.ls-stripe .row.on .lb{color:#1a1f36;font-weight:600}
+  .ls-stripe .row.rec{background:#f3f0ff}.ls-stripe .row.rec .lb{color:#5b4bcc}
+
+  /* ============ 분류 칩 ============ */
+  .cr{display:flex;flex-wrap:wrap;gap:7px}
+  .cr button{display:inline-flex;align-items:center;gap:6px}
+  .cr .cdot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
+  .cr .cn{opacity:.55;font-size:.85em}
+  /* Linear labels */
+  .cr-linear button{padding:4px 10px;font-size:13px;font-weight:500;border-radius:6px;color:#3a3a3a;background:transparent}
+  .cr-linear button:hover{background:#f1f1f2}
+  .cr-linear button.on{background:#e8e8ea;color:#1a1a1a}
+  /* GitHub */
+  .cr-gh button{padding:5px 12px;font-size:12px;font-weight:600;border-radius:999px;background:#f6f8fa;color:#3a3a3a}
+  .cr-gh button:hover{background:#ebeef1}
+  .cr-gh button.on{background:#1f2328;color:#fff}
+  /* Raycast */
+  .cr-raycast button{padding:4px 10px;font-size:13px;font-weight:500;border-radius:8px;background:#f4f4f5;color:#3a3a3a}
+  .cr-raycast button:hover{background:#ececee}
+  .cr-raycast button.on{background:#eceafe;color:#5e5ce6;font-weight:600}
+  /* Notion token */
+  .cr-notion button{padding:3px 9px;font-size:14px;font-weight:400;border-radius:5px;background:#ededec;color:#37352f}
+  .cr-notion button:hover{background:#e3e2e0}
+  .cr-notion button.on{background:#d3e5ef;color:#183347}
+
+  /* 하위 칩 */
+  .sub{display:flex;flex-wrap:wrap;gap:6px;padding-left:0}
+  .sub button{padding:3px 9px;font-size:12px;font-weight:500;border-radius:6px;background:#f4f4f5;color:#5a5a5f}
+  .sub button:hover{background:#eaeaeb}
+  .sub button.on{background:#e2e2e4;color:#111}
+
+  /* ============ 버튼 ============ */
+  .bt{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .bt button{display:inline-flex;align-items:center;justify-content:center}
+  /* Vercel */
+  .bt-vercel .pri{padding:8px 14px;font-size:14px;font-weight:500;border-radius:6px;background:#000;color:#fff}
+  .bt-vercel .pri:hover{background:#1a1a1a}
+  .bt-vercel .sec{padding:8px 14px;font-size:14px;font-weight:500;border-radius:6px;background:#f2f2f2;color:#111}
+  .bt-vercel .sec:hover{background:#e8e8e8}
+  /* Stripe */
+  .bt-stripe .pri{padding:8px 16px;font-size:14px;font-weight:600;border-radius:8px;background:#635bff;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .bt-stripe .pri:hover{background:#5249e0}
+  .bt-stripe .sec{padding:8px 16px;font-size:14px;font-weight:600;border-radius:8px;background:transparent;color:#635bff}
+  .bt-stripe .sec:hover{background:#f5f5fa}
+  /* Apple */
+  .bt-apple .pri{padding:9px 18px;font-size:15px;font-weight:500;border-radius:999px;background:#0a84ff;color:#fff}
+  .bt-apple .pri:hover{background:#0070e0}
+  .bt-apple .sec{padding:9px 18px;font-size:15px;font-weight:500;border-radius:999px;background:#eaf3ff;color:#0a84ff}
+  .bt-apple .sec:hover{background:#dcebfe}
+  /* Linear */
+  .bt-linear .pri{padding:7px 12px;font-size:13px;font-weight:500;border-radius:6px;background:#5e6ad2;color:#fff}
+  .bt-linear .pri:hover{background:#525dbf}
+  .bt-linear .sec{padding:7px 12px;font-size:13px;font-weight:500;border-radius:6px;background:#f4f4f5;color:#2b2b30}
+  .bt-linear .sec:hover{background:#ececee}
+
+  /* ============ 입력 + 자동완성 ============ */
+  .cmd{position:relative}
+  .cmd input{width:100%;outline:none;color:var(--ink)}
+  .cmd input::placeholder{color:var(--ink-faint)}
+  .cmd .menu{margin-top:6px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.14);overflow:hidden}
+  .cmd .mh{font-size:11px;font-weight:600;color:#9a9a9f;padding:7px 11px 4px}
+  .cmd .mi{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:7px;font-size:14px;font-weight:500}
+  .cmd .mi .ic{width:16px;height:16px;border-radius:4px;background:#e7e6f6;flex:none}
+  /* Raycast */
+  .cmd-raycast input{padding:12px 14px;font-size:15px;border-radius:10px;background:#f4f4f5}
+  .cmd-raycast input:focus{box-shadow:0 0 0 3px rgba(94,92,230,.22)}
+  .cmd-raycast .mi.on{background:#f1effe;color:#5e5ce6}
+  /* Linear cmd-K */
+  .cmd-linear input{padding:10px 12px;font-size:14px;border-radius:8px;background:#f4f4f5}
+  .cmd-linear input:focus{box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+  .cmd-linear .mi{font-size:13px}
+  .cmd-linear .mi.on{background:#ececee;color:#111}
+  .cmd-linear .kbd{margin-left:auto;font-size:11px;background:#f0f0f1;border-radius:4px;padding:1px 6px;color:#777}
+  /* Vercel combobox (two-line) */
+  .cmd-vercel input{padding:9px 12px;font-size:14px;border-radius:8px;background:#f2f2f2}
+  .cmd-vercel input:focus{box-shadow:0 0 0 3px rgba(0,0,0,.10)}
+  .cmd-vercel .mi{flex-direction:column;align-items:flex-start;gap:1px}
+  .cmd-vercel .mi .t{font-size:14px;font-weight:500;color:#111}
+  .cmd-vercel .mi .m{font-size:12px;color:#8a8a8a}
+  .cmd-vercel .mi.on{background:#f5f5f5}
+  /* Notion quick-find */
+  .cmd-notion input{padding:11px 14px;font-size:15px;border-radius:8px;background:#ededec}
+  .cmd-notion input:focus{box-shadow:0 0 0 3px rgba(35,131,226,.18)}
+  .cmd-notion .mi .ic{background:#efefee}
+  .cmd-notion .mi.on{background:#e8f2fb;color:#183347}
+
+  /* ============ 단어 카드 그리드 ============ */
+  .gr{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(var(--min,150px),1fr))}
+  .gr .card{display:flex;flex-direction:column;cursor:pointer;text-align:left;transition:background .12s,transform .14s}
+  .gr .term{font-family:var(--mono);color:#1a1a1c}
+  .gr .gloss{color:#8a8a85}
+  /* Are.na */
+  .gr-arena{--min:120px}
+  .gr-arena .card{aspect-ratio:1/1;min-height:104px;padding:12px;border-radius:8px;background:#fff;justify-content:flex-end}
+  .gr-arena .card:hover{background:#f0f0ee}
+  .gr-arena .card.on{background:#eceeff}.gr-arena .card.on .term{color:#5b6cff}
+  .gr-arena .term{font-size:13px;font-weight:600}.gr-arena .gloss{font-size:11px;margin-top:3px}
+  /* Apple Music */
+  .gr-apple{--min:130px}
+  .gr-apple .card{min-height:96px;padding:16px;border-radius:14px;background:#fff;align-items:center;justify-content:center;text-align:center}
+  .gr-apple .card:hover{transform:scale(1.02)}
+  .gr-apple .card.on{background:#eceeff}.gr-apple .card.on .term{color:#5b6cff}
+  .gr-apple .term{font-size:15px;font-weight:650;letter-spacing:-.01em}.gr-apple .gloss{font-size:12px;margin-top:5px}
+  /* Linear dense */
+  .gr-linear{--min:150px}
+  .gr-linear .card{min-height:56px;padding:10px 13px;border-radius:10px;background:#fff;justify-content:center}
+  .gr-linear .card:hover{background:#f0f0ee}
+  .gr-linear .card.on{background:#eceeff}.gr-linear .card.on .term{color:#5b6cff}
+  .gr-linear .term{font-size:13px;font-weight:600}.gr-linear .gloss{font-size:11px;margin-top:2px}
+  /* Cosmos airy */
+  .gr-cosmos{--min:140px}
+  .gr-cosmos .card{min-height:128px;padding:15px;border-radius:12px;background:#f0f0ee;justify-content:space-between}
+  .gr-cosmos .card:hover{background:#ebebe9}
+  .gr-cosmos .card.on{background:#eceeff}.gr-cosmos .card.on .term{color:#5b6cff}
+  .gr-cosmos .term{font-size:17px;font-weight:600;letter-spacing:-.02em}.gr-cosmos .gloss{font-size:11px}
+
+  /* ============ 조합 트레이(차콜) — 갤러리에선 정적 렌더 ============ */
+  .tray{position:relative;width:100%;background:#1a1a1c;color:rgba(255,255,255,.9);border-radius:16px;overflow:hidden;box-shadow:0 -10px 30px -10px rgba(0,0,0,.35)}
+  .tray .bar{display:flex;align-items:center;gap:10px;height:48px;padding:0 16px}
+  .tray .lab{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .tray .cnt{font-size:11px;font-weight:600;color:#1a1a1c;background:#97a3ff;border-radius:999px;padding:2px 8px}
+  .tray .chev{margin-left:auto;color:rgba(255,255,255,.5)}
+  .tray .body{padding:0 16px 14px}
+  .tray .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .tray .ch{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border-radius:8px;padding:5px 10px;font-size:12.5px}
+  .tray .ch .x{color:rgba(255,255,255,.5)}
+  /* iOS 시트 */
+  .tray-ios{border-radius:18px 18px 0 0}
+  .tray-ios .grab{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.25)}
+  .tray-ios .bar{height:54px;padding-top:8px}
+  /* 콘솔(모노) */
+  .tray-console{border-radius:12px;font-family:var(--mono)}
+  .tray-console .bar{height:42px}
+  .tray-console .cnt{background:transparent;color:#97a3ff;padding:0}
+  .tray-console .chips{flex-direction:column;gap:0;padding:0;margin:0 -16px}
+  .tray-console .ch{background:transparent;border-radius:0;padding:7px 16px;width:100%;font-size:12px}
+  .tray-console .ch:hover{background:rgba(255,255,255,.05)}
+  /* Linear 트레이 */
+  .tray-linear .body-inner{background:rgba(255,255,255,.04);border-radius:10px;padding:12px}
+  .tray-linear .ch{background:rgba(255,255,255,.1);border-radius:7px}
+
+  /* ============ 슬라이더 ============ */
+  .sld{padding:8px 4px}
+  .rng{-webkit-appearance:none;appearance:none;width:100%;background:transparent;cursor:pointer;display:block}
+  .rng:focus{outline:0}
+  .rng::-webkit-slider-thumb{-webkit-appearance:none;appearance:none}
+  /* Apple */
+  .rng-apple{height:4px;border-radius:999px;background:linear-gradient(#0a84ff,#0a84ff) 0/var(--p,45%) 100% no-repeat,#e3e3e0}
+  .rng-apple::-webkit-slider-thumb{width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);margin-top:-8px}
+  .rng-apple::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  /* Material */
+  .rng-material{height:6px;border-radius:3px;background:linear-gradient(#5b6cff,#5b6cff) 0/var(--p,45%) 100% no-repeat,#e3e3e0}
+  .rng-material::-webkit-slider-thumb{width:14px;height:14px;border-radius:50%;background:#5b6cff;margin-top:-4px;transition:box-shadow .15s}
+  .rng-material:hover::-webkit-slider-thumb{box-shadow:0 0 0 8px #eceeff}
+  .rng-material::-moz-range-thumb{width:14px;height:14px;border:0;border-radius:50%;background:#5b6cff}
+  /* Linear */
+  .rng-linear{height:4px;border-radius:2px;background:linear-gradient(#1a1a1c,#1a1a1c) 0/var(--p,45%) 100% no-repeat,#ececeb}
+  .rng-linear::-webkit-slider-thumb{width:10px;height:10px;border-radius:50%;background:#1a1a1c;margin-top:-3px;opacity:0;transition:opacity .12s}
+  .rng-linear:hover::-webkit-slider-thumb{opacity:1}
+  .rng-linear::-moz-range-thumb{width:10px;height:10px;border:0;border-radius:50%;background:#1a1a1c}
+  /* 차콜 위(트레이 내부용) */
+  .sld-dark{background:#1a1a1c;border-radius:10px;padding:16px 14px}
+  .rng-dark{height:4px;border-radius:2px;background:linear-gradient(#97a3ff,#97a3ff) 0/var(--p,45%) 100% no-repeat,rgba(255,255,255,.12)}
+  .rng-dark::-webkit-slider-thumb{width:12px;height:12px;border-radius:3px;background:#97a3ff;margin-top:-4px}
+  .rng-dark::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:3px;background:#97a3ff}
+</style>
+</head>
+<body>
+  <header class="kit-head">
+    <a class="kit-back" href="./studio.html">← 프롬프트 스튜디오로</a>
+    <h1>구성요소 시안</h1>
+    <p>사이트의 모든 구성요소를 분해해 시안별로 비교합니다. 모든 시안은 인터넷의 우수한 UI/UX(Linear·Notion·Vercel·Raycast·Things·Stripe·Apple 등)를 모방했고, 테두리·불필요한 요소 없이 미니멀하게 유지했습니다. 마음에 드는 시안을 알려주시면 스튜디오에 반영하고, 새 시안도 계속 추가합니다.</p>
+  </header>
+  <main class="kit">
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>사이드바 · 내비게이션</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Linear</b><span class="tag">컴팩트·선택 필</span></figcaption>
+          <div class="stage"><nav class="nv nv-linear"><a class="on"><span class="dot"></span>단어장</a><a><span class="dot"></span>가져오기</a><a><span class="dot"></span>프리셋</a></nav></div></figure>
+        <figure class="v"><figcaption><b>Notion</b><span class="tag">여백·저대비</span></figcaption>
+          <div class="stage"><nav class="nv nv-notion"><a class="on"><span class="dot"></span>단어장</a><a><span class="dot"></span>가져오기</a><a><span class="dot"></span>프리셋</a></nav></div></figure>
+        <figure class="v"><figcaption><b>Vercel</b><span class="tag">쿨 뉴트럴·굵은 선택</span></figcaption>
+          <div class="stage"><nav class="nv nv-vercel"><a class="on"><span class="dot"></span>단어장</a><a><span class="dot"></span>가져오기</a><a><span class="dot"></span>프리셋</a></nav></div></figure>
+        <figure class="v"><figcaption><b>Raycast</b><span class="tag">따뜻한 톤·단축키</span></figcaption>
+          <div class="stage"><nav class="nv nv-raycast"><a class="on"><span class="dot"></span>단어장<span class="meta">⌘1</span></a><a><span class="dot"></span>가져오기<span class="meta">⌘2</span></a><a><span class="dot"></span>프리셋<span class="meta">⌘3</span></a></nav></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>프리셋 리스트 · 추천 상태</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Things 3</b><span class="tag">따뜻한 종이·여유</span></figcaption>
+          <div class="stage"><div class="ls ls-things"><div class="row on"><span class="lb">스냅샷 세트</span><span class="ct">8</span></div><div class="row rec"><span class="lb">골든아워 무드</span><span class="ct">추천</span></div><div class="row"><span class="lb">시네마틱</span><span class="ct">8</span></div></div></div></figure>
+        <figure class="v"><figcaption><b>Superhuman</b><span class="tag">고밀도·카운트 필</span></figcaption>
+          <div class="stage"><div class="ls ls-super"><div class="row on"><span class="lb">스냅샷 세트</span><span class="ct">8</span></div><div class="row rec"><span class="lb">골든아워 무드</span><span class="ct">추천</span></div><div class="row"><span class="lb">시네마틱</span><span class="ct">8</span></div></div></div></figure>
+        <figure class="v"><figcaption><b>Height</b><span class="tag">큰 라벨·틴트 추천</span></figcaption>
+          <div class="stage"><div class="ls ls-height"><div class="row rec"><span class="lb">골든아워 무드</span><span class="ct">5</span></div><div class="row on"><span class="lb">스냅샷 세트</span><span class="ct">8</span></div><div class="row"><span class="lb">시네마틱</span><span class="ct">8</span></div></div></div></figure>
+        <figure class="v"><figcaption><b>Stripe</b><span class="tag">tabular 숫자·차분</span></figcaption>
+          <div class="stage"><div class="ls ls-stripe"><div class="row on"><span class="lb">스냅샷 세트</span><span class="ct">8</span></div><div class="row rec"><span class="lb">골든아워 무드</span><span class="ct">5</span></div><div class="row"><span class="lb">시네마틱</span><span class="ct">8</span></div></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>분류 칩</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Linear 라벨</b><span class="tag">점·회색 선택</span></figcaption>
+          <div class="stage"><div class="cr cr-linear"><button class="on">전체</button><button>인물</button><button>상황</button><button>카메라<span class="cn">5</span></button></div></div></figure>
+        <figure class="v"><figcaption><b>GitHub 필터</b><span class="tag">알약·다크 활성</span></figcaption>
+          <div class="stage"><div class="cr cr-gh"><button class="on">전체</button><button>인물<span class="cn">5</span></button><button>상황<span class="cn">3</span></button><button>카메라<span class="cn">5</span></button></div></div></figure>
+        <figure class="v"><figcaption><b>Raycast</b><span class="tag">플랫·옅은 강조</span></figcaption>
+          <div class="stage"><div class="cr cr-raycast"><button class="on">전체</button><button>인물</button><button>상황</button><button>카메라</button></div></div></figure>
+        <figure class="v"><figcaption><b>Notion 토큰</b><span class="tag">소프트 그레이</span></figcaption>
+          <div class="stage"><div class="cr cr-notion"><button class="on">전체</button><button>인물</button><button>상황</button><button>카메라</button></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>하위 칩</h2><span>중립·보조</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>중립 보조 칩</b><span class="tag">강조색 안 씀</span></figcaption>
+          <div class="stage"><div class="sub"><button class="on">전체</button><button>포즈·자세</button><button>동작</button><button>시선·방향</button></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>버튼 · 주요/보조</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Vercel</b><span class="tag">블랙 솔리드</span></figcaption>
+          <div class="stage"><div class="bt bt-vercel"><button class="pri">복사</button><button class="sec">비우기</button></div></div></figure>
+        <figure class="v"><figcaption><b>Stripe</b><span class="tag">인디고·소프트 섀도우</span></figcaption>
+          <div class="stage"><div class="bt bt-stripe"><button class="pri">복사</button><button class="sec">비우기</button></div></div></figure>
+        <figure class="v"><figcaption><b>Apple</b><span class="tag">알약·틴트 보조</span></figcaption>
+          <div class="stage"><div class="bt bt-apple"><button class="pri">복사</button><button class="sec">비우기</button></div></div></figure>
+        <figure class="v"><figcaption><b>Linear</b><span class="tag">컴팩트 바이올렛</span></figcaption>
+          <div class="stage"><div class="bt bt-linear"><button class="pri">복사</button><button class="sec">비우기</button></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>검색 · 추가 입력 + 자동완성</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Raycast</b><span class="tag">큰 필드·링 포커스</span></figcaption>
+          <div class="stage tall"><div class="cmd cmd-raycast"><input placeholder="단어 입력 후 Enter"><div class="menu"><div class="mh">추천</div><div class="mi on"><span class="ic"></span>golden hour · 골든아워</div><div class="mi"><span class="ic"></span>bokeh · 보케</div></div></div></div></figure>
+        <figure class="v"><figcaption><b>Linear ⌘K</b><span class="tag">모노크롬·단축키</span></figcaption>
+          <div class="stage tall"><div class="cmd cmd-linear"><input placeholder="명령 또는 단어…"><div class="menu"><div class="mi on">golden hour<span class="kbd">↵</span></div><div class="mi">bokeh<span class="kbd">B</span></div></div></div></div></figure>
+        <figure class="v"><figcaption><b>Vercel</b><span class="tag">2줄 항목</span></figcaption>
+          <div class="stage tall"><div class="cmd cmd-vercel"><input placeholder="단어 추가…"><div class="menu"><div class="mi on"><span class="t">golden hour</span><span class="m">골든아워 · 조명</span></div><div class="mi"><span class="t">bokeh</span><span class="m">보케 · 카메라</span></div></div></div></div></figure>
+        <figure class="v"><figcaption><b>Notion</b><span class="tag">칩 아이콘·틴트</span></figcaption>
+          <div class="stage tall"><div class="cmd cmd-notion"><input placeholder="단어 검색…"><div class="menu"><div class="mi on"><span class="ic"></span>golden hour · 골든아워</div><div class="mi"><span class="ic"></span>bokeh · 보케</div></div></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>단어 카드 그리드</h2><span>4 시안 · 호버 시 영단어 강조</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Are.na</b><span class="tag">정사각·플랫</span></figcaption>
+          <div class="stage tall"><div class="gr gr-arena"><div class="card on"><span class="term">golden hour</span><span class="gloss">골든아워</span></div><div class="card"><span class="term">bokeh</span><span class="gloss">보케</span></div><div class="card"><span class="term">backlight</span><span class="gloss">역광</span></div></div></div></figure>
+        <figure class="v"><figcaption><b>Apple Music</b><span class="tag">중앙·여유</span></figcaption>
+          <div class="stage tall"><div class="gr gr-apple"><div class="card on"><span class="term">golden hour</span><span class="gloss">골든아워</span></div><div class="card"><span class="term">bokeh</span><span class="gloss">보케</span></div><div class="card"><span class="term">backlight</span><span class="gloss">역광</span></div></div></div></figure>
+        <figure class="v"><figcaption><b>Linear</b><span class="tag">고밀도·가로</span></figcaption>
+          <div class="stage tall"><div class="gr gr-linear"><div class="card on"><span class="term">golden hour</span><span class="gloss">골든아워</span></div><div class="card"><span class="term">bokeh</span><span class="gloss">보케</span></div><div class="card"><span class="term">backlight</span><span class="gloss">역광</span></div><div class="card"><span class="term">soft light</span><span class="gloss">부드러운 빛</span></div></div></div></figure>
+        <figure class="v"><figcaption><b>Cosmos</b><span class="tag">세로·갤러리</span></figcaption>
+          <div class="stage tall"><div class="gr gr-cosmos"><div class="card on"><span class="term">golden hour</span><span class="gloss">골든아워</span></div><div class="card"><span class="term">bokeh</span><span class="gloss">보케</span></div></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>조합 트레이 · 하단 차콜</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>장바구니 바</b><span class="tag">슬림 바 + 카운트</span></figcaption>
+          <div class="stage tall"><div class="tray"><div class="bar"><span class="lab">조합</span><span class="cnt">3</span><span class="chev">⌄</span></div><div class="body"><div class="chips"><span class="ch">woman <span class="x">×</span></span><span class="ch">golden hour <span class="x">×</span></span><span class="ch">85mm <span class="x">×</span></span></div></div></div></div></figure>
+        <figure class="v"><figcaption><b>iOS 시트</b><span class="tag">그랩 핸들·풀폭</span></figcaption>
+          <div class="stage tall"><div class="tray tray-ios"><span class="grab"></span><div class="bar"><span class="lab">조합</span><span class="cnt">3</span><span class="chev">⌄</span></div><div class="body"><div class="chips"><span class="ch">woman <span class="x">×</span></span><span class="ch">golden hour <span class="x">×</span></span><span class="ch">85mm <span class="x">×</span></span></div></div></div></div></figure>
+        <figure class="v"><figcaption><b>콘솔(모노)</b><span class="tag">행 목록·스크롤</span></figcaption>
+          <div class="stage tall"><div class="tray tray-console"><div class="bar"><span class="lab">조합</span><span class="cnt">3</span><span class="chev">⌄</span></div><div class="body"><div class="chips"><span class="ch">woman</span><span class="ch">golden hour</span><span class="ch">85mm</span></div></div></div></div></figure>
+        <figure class="v"><figcaption><b>Linear 트레이</b><span class="tag">내부 톤 분리</span></figcaption>
+          <div class="stage tall"><div class="tray tray-linear"><div class="bar"><span class="lab">조합</span><span class="cnt">3</span><span class="chev">⌄</span></div><div class="body"><div class="body-inner"><div class="chips"><span class="ch">woman <span class="x">×</span></span><span class="ch">golden hour <span class="x">×</span></span><span class="ch">85mm <span class="x">×</span></span></div></div></div></div></div></figure>
+      </div>
+    </section>
+
+    <section class="cmp">
+      <div class="cmp-h"><h2>슬라이더</h2><span>4 시안</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>Apple</b><span class="tag">큰 흰 썸·얇은 트랙</span></figcaption>
+          <div class="stage"><div class="sld"><input type="range" class="rng rng-apple" value="45"></div></div></figure>
+        <figure class="v"><figcaption><b>Material</b><span class="tag">강조색 썸·호버 헤일로</span></figcaption>
+          <div class="stage"><div class="sld"><input type="range" class="rng rng-material" value="45"></div></div></figure>
+        <figure class="v"><figcaption><b>Linear</b><span class="tag">호버 전 썸 숨김</span></figcaption>
+          <div class="stage"><div class="sld"><input type="range" class="rng rng-linear" value="45"></div></div></figure>
+        <figure class="v"><figcaption><b>차콜 위</b><span class="tag">트레이 내부용</span></figcaption>
+          <div class="stage"><div class="sld-dark"><input type="range" class="rng rng-dark" value="45"></div></div></figure>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>
