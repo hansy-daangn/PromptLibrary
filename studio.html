@@ -66,7 +66,7 @@
 
   .view{display:none}
   .view.show{display:block}
-  .body{padding:16px 16px 200px}
+  .body{padding:16px 16px calc(var(--dock-h,180px) + 24px)}
 
   /* ── 공통 입력행 ── */
   .add-row{display:flex;gap:6px;background:var(--raise);border-radius:14px;padding:6px;position:relative}
@@ -203,6 +203,14 @@
   .dclear:hover{color:var(--dock-tx)}
   .dcopy{background:var(--accent);color:#fff}
   .dcopy:hover{background:var(--accent-bright)}
+  .dock-save{display:flex;gap:6px;margin-bottom:8px}
+  .dock-save input{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:8px;color:var(--dock-tx);font:inherit;font-size:12px;padding:8px 10px}
+  .dock-save input::placeholder{color:var(--dock-dim)}
+  .dock-save input:focus{outline:none;border-color:var(--accent)}
+  .dock-save button{appearance:none;border:0;border-radius:8px;padding:8px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .dock-save .psok{background:var(--accent);color:#fff}
+  .dock-save .pscancel{background:none;color:var(--dock-dim)}
+  .dock.is-empty .dock-save{display:none}
   .dock-tokens{display:flex;flex-wrap:wrap;gap:6px;max-height:148px;overflow:auto}
   .dtok{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);
     border-radius:8px;padding:4px 5px 4px 9px}
@@ -305,6 +313,11 @@
           <button class="dcopy" id="copyAll">복사</button>
         </span>
       </div>
+      <div class="dock-save" id="dockSave" hidden>
+        <input id="presetName" type="text" placeholder="세트 이름 입력 후 저장" maxlength="24" autocomplete="off">
+        <button class="psok" id="presetSaveOk" type="button">저장</button>
+        <button class="pscancel" id="presetSaveCancel" type="button">취소</button>
+      </div>
       <div class="dock-empty">아래 단어나 프리셋을 눌러 프롬프트를 만들어 보세요</div>
       <div class="dock-tokens" id="dockTokens"></div>
       <div class="dock-preview" id="dockPreview"></div>
@@ -342,8 +355,10 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     return{get(k){try{return ok?localStorage.getItem(k):(k in mem?mem[k]:null);}catch(e){return k in mem?mem[k]:null;}},
       set(k,v){try{ok?localStorage.setItem(k,v):(mem[k]=v);}catch(e){mem[k]=v;}}};
   })();
-  const K_PRESETS="promptStudio.presets", K_COMPOSE="promptStudio.compose", K_USAGE="promptStudio.usage";
-  function loadJSON(k,def){try{const r=store.get(k);if(r){const d=JSON.parse(r);return d;}}catch(e){}return def;}
+  const K_PRESETS="promptStudio.presets", K_COMPOSE="promptStudio.compose", K_USAGE="promptStudio.usage", K_WORDS="promptStudio.words";
+  function loadJSON(k,def){try{const r=store.get(k);if(r!=null){return JSON.parse(r);}}catch(e){}return def;}
+  const asArr=(v)=>Array.isArray(v)?v:[];                                  // 손상된 localStorage로부터 보호
+  const asObj=(v)=>(v&&typeof v==="object"&&!Array.isArray(v))?v:{};
 
   const CATS=["인물","포즈","장소·배경","조명","카메라·구도","스타일","분위기","기타"];
 
@@ -375,10 +390,10 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   function guessCat(en){const s=" "+String(en).toLowerCase()+" ";for(const[c,keys]of CAT_RULES)for(const k of keys)if(s.indexOf(k)!==-1)return c;return"기타";}
 
   /* ---------- 상태 ---------- */
-  let userWords=[];                                   // Supabase words
-  let userPresets=loadJSON(K_PRESETS,[]);             // 사용자 프리셋
-  let compose=loadJSON(K_COMPOSE,[]);                 // [{en,ko}]
-  let usage=loadJSON(K_USAGE,{});                     // lower(en)->count
+  let userWords=asArr(loadJSON(K_WORDS,[]));          // 내 단어(로컬 캐시 + Supabase)
+  let userPresets=asArr(loadJSON(K_PRESETS,[]));      // 사용자 프리셋
+  let compose=asArr(loadJSON(K_COMPOSE,[])).filter(c=>c&&c.en); // [{en,ko}]
+  let usage=asObj(loadJSON(K_USAGE,{}));              // lower(en)->count
   let activeCats=new Set(), query="";
   let VOCAB=[], VMAP={};
 
@@ -391,6 +406,7 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   const presetsEl=$("#presets"), chipsEl=$("#chips"), libEl=$("#lib");
   const searchBox=$("#searchBox"), searchInput=$("#searchInput"), searchClear=$("#searchClear");
   const dock=$("#dock"), dockTokens=$("#dockTokens"), dockCount=$("#dockCount"), dockPreview=$("#dockPreview");
+  const dockSave=$("#dockSave"), presetName=$("#presetName"), presetSaveOk=$("#presetSaveOk"), presetSaveCancel=$("#presetSaveCancel");
   const importInput=$("#importInput"), splitBtn=$("#splitBtn"), parsedWrap=$("#parsedWrap"), tokensEl=$("#tokens");
   const selectAllBtn=$("#selectAll"), cancelBtn=$("#cancelParse"), saveLibBtn=$("#saveLib"), toComposeBtn=$("#toCompose");
   const saveNEl=$("#saveN"), composeNEl=$("#composeN"), aiFillBtn=$("#aiFill");
@@ -411,12 +427,13 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   /* ---------- 단어장(vocab) 구성 ---------- */
   function buildVocab(){
     const map={};
-    BUILTIN.forEach(w=>{ const k=w.e.toLowerCase(); map[k]={en:w.e,ko:w.k,cat:w.c,builtin:true,score:0}; });
+    BUILTIN.forEach(w=>{ const k=w.e.toLowerCase(); map[k]={en:w.e,ko:w.k,cat:w.c,builtin:true,cnt:0,score:0}; });
     userWords.forEach(u=>{ const k=lc(u.en); if(!k) return;
-      if(map[k]){ map[k].id=u.id; map[k].score=Math.max(map[k].score,u.count||0); }
-      else { map[k]={en:u.en,ko:(u.ko&&u.ko.trim())||translate(u.en),cat:CATOF[k]||u.cat||guessCat(u.en),id:u.id,score:(u.count||0)}; }
+      if(map[k]){ map[k].id=u.id; map[k].cnt=Math.max(map[k].cnt||0,u.count||0); }   // 빌트인 단어는 분류/뜻 유지(오분류 자동 교정)
+      else { let cat=CATOF[k]||u.cat||guessCat(u.en); if(CATS.indexOf(cat)===-1) cat="기타";
+             map[k]={en:u.en,ko:(u.ko&&u.ko.trim())||translate(u.en),cat:cat,id:u.id,cnt:(u.count||0),score:0}; }
     });
-    Object.keys(map).forEach(k=>{ map[k].score=(map[k].score||0)+(usage[k]||0); });
+    Object.keys(map).forEach(k=>{ map[k].score=(map[k].cnt||0)+(usage[k]||0); });   // 정렬 점수 = Supabase 카운트 + 로컬 사용수
     VMAP=map; VOCAB=Object.values(map);
   }
   function vocabKo(en){ const v=VMAP[lc(en)]; return v?v.ko:translate(en); }
@@ -428,13 +445,16 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     if(composeHas(en)) return false;
     compose.push({en, ko:vocabKo(en)});
     const k=lc(en); usage[k]=(usage[k]||0)+1; store.set(K_USAGE,JSON.stringify(usage));
-    // 사용자 단어면 Supabase 카운트도 best-effort 갱신
-    const v=VMAP[k]; if(v&&v.id&&sb){ sbUpdate(v.id,{count:(v.score||0)+1}).catch(()=>{}); }
+    // 사용자 단어면 Supabase '원본 카운트'(usage 미포함)만 +1 해서 누적 부풀림 방지
+    const v=VMAP[k]; if(v&&v.id&&sb){ v.cnt=(v.cnt||0)+1; const uw=userWords.find(w=>lc(w.en)===k); if(uw) uw.count=v.cnt; sbUpdate(v.id,{count:v.cnt}).catch(()=>{}); }
     persistCompose(); return true;
   }
   function removeCompose(en){ const k=lc(en); const i=compose.findIndex(c=>lc(c.en)===k); if(i>=0){compose.splice(i,1);persistCompose();return true;} return false; }
   function toggleCompose(en){ if(composeHas(en)) removeCompose(en); else addCompose(en); buildVocab(); renderAll(); }
   function persistCompose(){ store.set(K_COMPOSE,JSON.stringify(compose)); }
+  function persistWords(){ store.set(K_WORDS,JSON.stringify(userWords)); }
+  // 도크 높이를 측정해 본문 하단 여백을 맞춤(긴 조합이 마지막 단어를 가리지 않도록)
+  function syncDockHeight(){ try{ document.documentElement.style.setProperty("--dock-h",(dock.hidden?0:dock.offsetHeight)+"px"); }catch(e){} }
 
   function renderDock(){
     dockTokens.innerHTML="";
@@ -443,7 +463,7 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
       t.innerHTML='<span class="dtx"><span class="de"></span><span class="dk"></span></span>'+
         '<button class="x" type="button" aria-label="제거"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l6 6M10 4l-6 6"/></svg></button>';
       t.querySelector(".de").textContent=c.en;
-      const k=c.ko||vocabKo(c.en);
+      const k=vocabKo(c.en)||c.ko;                 // 최신 뜻 우선(나중에 등록된 뜻이 반영되도록)
       const dk=t.querySelector(".dk"); if(k) dk.textContent=k; else dk.remove();
       t.querySelector(".x").addEventListener("click",e=>{e.stopPropagation();removeCompose(c.en);buildVocab();renderAll();});
       dockTokens.appendChild(t);
@@ -455,6 +475,7 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     }else{
       dock.classList.add("is-empty"); dockCount.textContent="";
     }
+    syncDockHeight();
   }
 
   /* ---------- 프리셋 ---------- */
@@ -471,7 +492,7 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
       const b=document.createElement("button"); b.type="button"; b.className="pchip";
       if(ratio>=1&&total) b.classList.add("applied");
       else if(ratio>=0.5&&total) b.classList.add("rec");
-      b.title=(p.desc||"")+" · "+words.map(w=>w).join(", ");
+      b.title=(p.desc||"")+" · "+words.join(", ")+((ratio>=1&&total)?" · 다시 누르면 해제":"");
       const lab=document.createElement("span"); lab.className="pl"; lab.textContent=p.label; b.appendChild(lab);
       const pn=document.createElement("span"); pn.className="pn"; pn.textContent=present+"/"+total; b.appendChild(pn);
       b.addEventListener("click",()=>applyPreset(p));
@@ -485,7 +506,7 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     });
     const save=document.createElement("button"); save.type="button"; save.className="pchip save";
     save.textContent="+ 현재 조합 저장";
-    save.addEventListener("click",savePresetFromCompose);
+    save.addEventListener("click",openSavePreset);
     presetsEl.appendChild(save);
   }
   function applyPreset(p){
@@ -495,14 +516,23 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     else{ let n=0; words.forEach(w=>{ if(addCompose(w)) n++; }); toast("‘"+p.label+"’ +"+n+"개"); }
     buildVocab(); renderAll();
   }
-  function savePresetFromCompose(){
+  // window.prompt 는 일부 인앱 브라우저(카카오톡 등)에서 막히므로 도크 내부 인라인 입력 사용
+  function openSavePreset(){
     if(!compose.length){ toast("담긴 단어가 없어요"); return; }
-    const name=(window.prompt("이 조합을 어떤 이름으로 저장할까요?","내 세트")||"").trim();
-    if(!name) return;
+    dockSave.hidden=false; presetName.value=""; syncDockHeight(); presetName.focus();
+  }
+  function cancelSavePreset(){ dockSave.hidden=true; syncDockHeight(); }
+  function commitSavePreset(){
+    if(!compose.length){ cancelSavePreset(); toast("담긴 단어가 없어요"); return; }
+    const name=(presetName.value||"").trim();
+    if(!name){ toast("세트 이름을 입력하세요"); presetName.focus(); return; }
     userPresets.push({id:uid(),label:name,desc:"내 세트",words:compose.map(c=>c.en)});
     store.set(K_PRESETS,JSON.stringify(userPresets));
-    renderPresets(); toast("‘"+name+"’ 세트 저장됨");
+    dockSave.hidden=true; renderPresets(); syncDockHeight(); toast("‘"+name+"’ 세트 저장됨");
   }
+  presetSaveOk.addEventListener("click",commitSavePreset);
+  presetSaveCancel.addEventListener("click",cancelSavePreset);
+  presetName.addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();commitSavePreset();} if(e.key==="Escape"){e.preventDefault();cancelSavePreset();} });
   function deleteUserPreset(id){
     userPresets=userPresets.filter(p=>p.id!==id);
     store.set(K_PRESETS,JSON.stringify(userPresets));
@@ -617,8 +647,9 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     if(e.key==="Enter"){
       e.preventDefault();
       const q=wordInput.value.trim(); if(!q) return;
+      if(acOpen && acActive>0){ acceptAc(acActive); return; }  // 사용자가 화살표로 직접 고른 추천 우선
       if(VMAP[lc(q)]){ doAdd(q); return; }                     // 정확히 일치하는 단어는 그대로 담기
-      if(acOpen){ acceptAc(acActive>=0?acActive:0); return; }  // 부분 입력이면 추천 자동완성 사용
+      if(acOpen){ acceptAc(acActive>=0?acActive:0); return; }  // 부분 입력이면 맨 위 추천 사용
       doAdd(q);                                                // 그 외엔 입력 그대로 담기
     }
   });
@@ -626,8 +657,8 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   document.addEventListener("click",e=>{ if(!e.target.closest(".add-row")) closeAc(); });
 
   /* ---------- 도크 액션 ---------- */
-  $("#clearAll").addEventListener("click",()=>{ if(!compose.length)return; compose=[]; persistCompose(); buildVocab(); renderAll(); });
-  $("#savePreset").addEventListener("click",savePresetFromCompose);
+  $("#clearAll").addEventListener("click",()=>{ if(!compose.length)return; compose=[]; persistCompose(); dockSave.hidden=true; buildVocab(); renderAll(); });
+  $("#savePreset").addEventListener("click",openSavePreset);
   $("#copyAll").addEventListener("click",()=>{
     const text=compose.map(c=>c.en).join(", ");
     if(!text){ toast("담긴 단어가 없어요"); return; }
@@ -647,7 +678,7 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
       if(src){ importInput.value=src; }
       else{ toast("클립보드가 비어 있어요"); return; }
     }
-    const segs=src.split(/[,.\n]+/).map(s=>s.trim()).filter(Boolean);
+    const segs=src.split(/[,\n;|]+/).map(s=>s.trim()).filter(Boolean);   // 마침표(.)로는 분리하지 않음 — 가중치/소수(예: (masterpiece:1.2)) 보존
     const seen=new Set(); parsed=[];
     for(const s of segs){ const k=s.toLowerCase(); if(seen.has(k))continue; seen.add(k);
       parsed.push({en:s, ko:translate(s), exists:!!VMAP[k], sel:false});
@@ -692,10 +723,10 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     const chosen=parsed.filter(p=>p.sel&&!p.exists);
     if(!chosen.length){ toast("저장할 새 단어가 없어요"); return; }
     const fresh=chosen.map(p=>({id:uid(),en:p.en,ko:p.ko||translate(p.en),cat:(CATOF[lc(p.en)]||guessCat(p.en)),count:0}));
-    userWords.push(...fresh); buildVocab(); renderAll();
+    userWords.push(...fresh); persistWords(); buildVocab(); renderAll();   // 로컬에 먼저 영속화(오프라인에서도 유지)
     chosen.forEach(p=>p.exists=true); renderParsed();
     toast("단어장에 "+fresh.length+"개 저장");
-    if(sb){ try{ await sbInsert(fresh); }catch(e){ console.error(e); toast("클라우드 저장 실패 · 로컬엔 반영됨"); } }
+    if(sb){ sbInsert(fresh).catch(e=>console.error(e)); }   // 클라우드는 best-effort(개별 실패는 무시)
   }
 
   /* ---------- AI 번역(가져오기 보조) ---------- */
@@ -731,9 +762,16 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   async function sbList(){
     const {data,error}=await sb.from("words").select("*");
     if(error) throw error;
-    return data.map(d=>({id:d.id,en:d.en,ko:d.ko||"",cat:d.cat||"기타",count:d.count||0}));
+    return (data||[]).map(d=>({id:d.id,en:d.en,ko:d.ko||"",cat:d.cat||"기타",count:d.count||0}));
   }
-  async function sbInsert(rows){ if(!sb)return; const {error}=await sb.from("words").insert(rows.map(r=>({id:r.id,en:r.en,ko:r.ko,cat:r.cat,count:r.count}))); if(error) throw error; }
+  // 한 단어 저장이 실패(예: lower(en) 유니크 중복)해도 나머지 단어 저장을 막지 않도록 개별 삽입
+  async function sbInsert(rows){
+    if(!sb) return;
+    for(const r of rows){
+      const {error}=await sb.from("words").insert({id:r.id,en:r.en,ko:r.ko,cat:r.cat,count:r.count});
+      if(error) console.warn("단어 클라우드 저장 건너뜀:", r.en, error.message||error);
+    }
+  }
   async function sbUpdate(id,patch){ if(!sb)return; const {error}=await sb.from("words").update(patch).eq("id",id); if(error) throw error; }
 
   /* ---------- 탭 ---------- */
@@ -741,6 +779,8 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     document.querySelectorAll(".tab").forEach(t=>{const on=t.dataset.tab===name;t.classList.toggle("active",on);t.setAttribute("aria-selected",on?"true":"false");});
     document.querySelectorAll(".view").forEach(v=>{const on=v.dataset.view===name;v.classList.toggle("show",on);v.hidden=!on;});
     dock.hidden = name!=="compose";
+    if(dock.hidden) dockSave.hidden=true;
+    syncDockHeight();
   }
   document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 
@@ -749,11 +789,18 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
 
   /* ---------- 시작 ---------- */
   (async function init(){
-    buildVocab(); renderAll();
+    buildVocab(); renderAll();                       // 로컬 캐시(내 단어 포함) 즉시 표시
     if(!CONFIGURED){ setStatus(userWords.length?"demo":"local"); return; }
-    if(!sb){ setStatus("error"); return; }
-    try{ userWords=await sbList(); buildVocab(); renderAll(); setStatus("ok"); }
-    catch(e){ console.error(e); setStatus("error"); }
+    if(!sb){ setStatus(userWords.length?"demo":"error"); return; }
+    try{
+      const cloud=await sbList();
+      const cloudSet=new Set(cloud.map(w=>lc(w.en)));
+      const localOnly=userWords.filter(w=>!cloudSet.has(lc(w.en)));   // 오프라인에 저장됐던 단어 보존
+      userWords=cloud.concat(localOnly);
+      persistWords(); buildVocab(); renderAll(); setStatus("ok");
+      if(localOnly.length) sbInsert(localOnly).catch(()=>{});         // 클라우드로 동기화(heal)
+    }
+    catch(e){ console.error(e); setStatus(userWords.length?"demo":"error"); }
   })();
 })();
 </script>
