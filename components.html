@@ -259,6 +259,40 @@
   .rng-dark{height:4px;border-radius:2px;background:linear-gradient(#97a3ff,#97a3ff) 0/var(--p,45%) 100% no-repeat,rgba(255,255,255,.12)}
   .rng-dark::-webkit-slider-thumb{width:12px;height:12px;border-radius:3px;background:#97a3ff;margin-top:-4px}
   .rng-dark::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:3px;background:#97a3ff}
+
+  /* ============ 전체 레이아웃 시안 (구조 자체가 다름) ============ */
+  .lay .vrow{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  .screen{height:276px;border-radius:14px;overflow:hidden;position:relative;background:#f4f4f2;font-size:8px;line-height:1.3;
+    box-shadow:0 1px 3px rgba(20,20,24,.05),0 12px 30px -16px rgba(20,20,24,.16)}
+  .m-pill{display:inline-block;font-size:7.5px;font-weight:600;padding:3px 8px;border-radius:999px;background:#ececea;color:#5a5a5f;white-space:nowrap}
+  .m-pill.on{background:#e2e6fb;color:#3f4ed0}
+  .m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .m-card{background:#fbfbfa;border-radius:6px;padding:6px 7px}
+  .m-card .e{font-family:var(--mono);font-size:8px;font-weight:600;color:#1d1d1f;display:block}
+  .m-card .k{font-size:7px;color:#9a9a9f}
+  .m-tray{position:absolute;left:0;right:0;bottom:0;height:30px;background:#1a1a1c;color:rgba(255,255,255,.82);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:8px;font-weight:600}
+  .m-tray .lab{letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);font-size:7px}
+  .m-tray .mc{margin-left:auto;background:#97a3ff;color:#1a1a1c;border-radius:999px;padding:1px 6px;font-weight:700}
+  .m-search{height:20px;border-radius:6px;background:#f0f0ee;display:flex;align-items:center;padding:0 9px;color:#a3a3a8;font-size:8px}
+  .m-brand{width:9px;height:9px;border-radius:3px;background:#4f5fe6;flex:none}
+  /* L1 — 탑바 풀폭 */
+  .l1-top{display:flex;align-items:center;gap:7px;padding:10px 12px;background:#fbfbfa}
+  .l1-top .tabs{display:flex;gap:4px}.l1-top .m-search{margin-left:auto;width:130px}
+  .l1-chips{display:flex;gap:5px;padding:9px 12px 8px}
+  .l1-body{padding:0 12px}
+  /* L2 — 커맨드 센트럴 */
+  .l2-hero{padding:22px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:9px}
+  .l2-hero .m-search{width:78%;height:26px;justify-content:center;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05),0 10px 24px -14px rgba(0,0,0,.18);font-weight:600;color:#7a7a80}
+  .l2-hero .pills{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+  .l2-body{padding:4px 12px}
+  /* L3 — 아이콘 레일 */
+  .l3{display:flex;height:100%}
+  .l3-rail{width:42px;flex:none;background:#f0f0ee;display:flex;flex-direction:column;align-items:center;gap:9px;padding:11px 0}
+  .l3-rail .ic{width:18px;height:18px;border-radius:6px;background:#dedede}
+  .l3-rail .ic.on{background:#e2e6fb}
+  .l3-main{flex:1;min-width:0;padding:11px 12px}
+  .l3-main .chips{display:flex;gap:5px;margin-bottom:8px}
+  .l3 .m-tray{left:42px}
 </style>
 </head>
 <body>
@@ -268,6 +302,41 @@
     <p>사이트의 모든 구성요소를 분해해 시안별로 비교합니다. 모든 시안은 인터넷의 우수한 UI/UX(Linear·Notion·Vercel·Raycast·Things·Stripe·Apple 등)를 모방했고, 테두리·불필요한 요소 없이 미니멀하게 유지했습니다. 마음에 드는 시안을 알려주시면 스튜디오에 반영하고, 새 시안도 계속 추가합니다.</p>
   </header>
   <main class="kit">
+
+    <section class="cmp lay">
+      <div class="cmp-h"><h2>전체 레이아웃 · 새 시안</h2><span>3 시안 · 구조 자체가 다름 · 단어 그리드 우선</span></div>
+      <div class="vrow">
+        <figure class="v"><figcaption><b>L1 · 탑바 풀폭</b><span class="tag">Vercel·Linear — 사이드바 제거, 그리드 최대폭</span></figcaption>
+          <div class="screen">
+            <div class="l1-top"><span class="m-brand"></span><span class="tabs"><span class="m-pill on">단어장</span><span class="m-pill">가져오기</span><span class="m-pill">프리셋</span></span><span class="m-search">단어 검색·추가</span></div>
+            <div class="l1-chips"><span class="m-pill on">전체</span><span class="m-pill">인물</span><span class="m-pill">상황</span><span class="m-pill">카메라</span><span class="m-pill">조명</span></div>
+            <div class="l1-body"><div class="m-grid">
+              <div class="m-card"><span class="e">woman</span><span class="k">여성</span></div><div class="m-card"><span class="e">forest</span><span class="k">숲</span></div><div class="m-card"><span class="e">golden hour</span><span class="k">골든아워</span></div><div class="m-card"><span class="e">bokeh</span><span class="k">보케</span></div>
+              <div class="m-card"><span class="e">85mm</span><span class="k">85mm</span></div><div class="m-card"><span class="e">soft light</span><span class="k">부드러운 빛</span></div><div class="m-card"><span class="e">moody</span><span class="k">무드</span></div><div class="m-card"><span class="e">red</span><span class="k">빨강</span></div>
+            </div></div>
+            <div class="m-tray"><span class="lab">조합</span><span>woman, golden hour, 85mm</span><span class="mc">3</span></div>
+          </div></figure>
+        <figure class="v"><figcaption><b>L2 · 커맨드 센트럴</b><span class="tag">Raycast — 중앙 검색이 중심, 키보드 우선</span></figcaption>
+          <div class="screen">
+            <div class="l2-hero"><span class="m-search">＋ 단어를 검색하거나 입력하세요</span><span class="pills"><span class="m-pill on">전체</span><span class="m-pill">인물</span><span class="m-pill">상황</span><span class="m-pill">카메라</span></span></div>
+            <div class="l2-body"><div class="m-grid">
+              <div class="m-card"><span class="e">woman</span><span class="k">여성</span></div><div class="m-card"><span class="e">forest</span><span class="k">숲</span></div><div class="m-card"><span class="e">golden hour</span><span class="k">골든아워</span></div><div class="m-card"><span class="e">bokeh</span><span class="k">보케</span></div>
+              <div class="m-card"><span class="e">85mm</span><span class="k">85mm</span></div><div class="m-card"><span class="e">soft light</span><span class="k">부드러운 빛</span></div><div class="m-card"><span class="e">moody</span><span class="k">무드</span></div><div class="m-card"><span class="e">red</span><span class="k">빨강</span></div>
+            </div></div>
+            <div class="m-tray"><span class="lab">조합</span><span>woman, golden hour, 85mm</span><span class="mc">3</span></div>
+          </div></figure>
+        <figure class="v"><figcaption><b>L3 · 아이콘 레일</b><span class="tag">Linear·Things — 52px 레일, 폭 회수</span></figcaption>
+          <div class="screen"><div class="l3">
+            <div class="l3-rail"><span class="m-brand"></span><span class="ic on"></span><span class="ic"></span><span class="ic"></span></div>
+            <div class="l3-main"><div class="chips"><span class="m-pill on">전체</span><span class="m-pill">인물</span><span class="m-pill">상황</span><span class="m-pill">카메라</span></div>
+              <div class="m-grid">
+                <div class="m-card"><span class="e">woman</span><span class="k">여성</span></div><div class="m-card"><span class="e">forest</span><span class="k">숲</span></div><div class="m-card"><span class="e">golden hour</span><span class="k">골든아워</span></div><div class="m-card"><span class="e">bokeh</span><span class="k">보케</span></div>
+                <div class="m-card"><span class="e">85mm</span><span class="k">85mm</span></div><div class="m-card"><span class="e">soft light</span><span class="k">부드러운 빛</span></div><div class="m-card"><span class="e">moody</span><span class="k">무드</span></div><div class="m-card"><span class="e">red</span><span class="k">빨강</span></div>
+              </div></div>
+            <div class="m-tray"><span class="lab">조합</span><span>woman, golden hour</span><span class="mc">3</span></div>
+          </div></div></figure>
+      </div>
+    </section>
 
     <section class="cmp">
       <div class="cmp-h"><h2>사이드바 · 내비게이션</h2><span>4 시안</span></div>
