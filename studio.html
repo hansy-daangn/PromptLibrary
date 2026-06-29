@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>프롬프트 스튜디오</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<script>try{if(localStorage.getItem("promptDrawer.theme")==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<style>
+  /* ===== 라이트(기본) · 인디고 팔레트 (index.html과 동일 계열) ===== */
+  :root{
+    --bg:#ffffff;--raise:#f3f4f7;--raise-2:#e7e9ef;--line:#ebedf2;--line-soft:#f0f1f5;
+    --tx:#1b1c22;--tx-mut:#585c68;--tx-dim:#9a9ea9;
+    --accent:#4f46e5;--accent-bright:#4338ca;--accent-soft:#4338ca;
+    --accent-tint:rgba(79,70,229,.10);--accent-tint-2:rgba(79,70,229,.18);
+    /* 추천(프리셋) 강조용 따뜻한 주황 */
+    --rec:#e08a3c;--rec-bright:#c9712a;--rec-tint:rgba(224,138,60,.13);--rec-tint-2:rgba(224,138,60,.22);
+    --radius:12px;--radius-sm:9px;
+    --shadow:0 8px 24px rgba(30,30,60,.08), 0 1px 3px rgba(30,30,60,.06);
+    --input-bg:#f3f4f7;
+    --dock-bg:#1b1c24;--dock-tx:#e9eaf2;--dock-dim:#8b8fa1;
+    font-synthesis-weight:none;
+  }
+  :root[data-theme="dark"]{
+    --bg:#15161c;--raise:#1f2129;--raise-2:#282b35;--line:#2a2d38;--line-soft:#23252e;
+    --tx:#e9eaf2;--tx-mut:#a3a7b5;--tx-dim:#6e7280;
+    --accent:#818cf8;--accent-bright:#a5b4fc;--accent-soft:#a5b4fc;
+    --accent-tint:rgba(129,140,248,.15);--accent-tint-2:rgba(129,140,248,.28);
+    --rec:#e0a060;--rec-bright:#f0b878;--rec-tint:rgba(224,160,96,.16);--rec-tint-2:rgba(224,160,96,.30);
+    --shadow:0 14px 40px -18px rgba(0,0,0,.6), 0 2px 8px -2px rgba(0,0,0,.4);
+    --input-bg:#1a1c23;
+    --dock-bg:#0f1014;--dock-tx:#e9eaf2;--dock-dim:#7c8090;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--tx);
+    font-family:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI","Malgun Gothic",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;transition:background .25s ease;
+  }
+  .panel{width:100%;max-width:720px;margin:0 auto;display:block}
+
+  /* ── 탭 헤더 ── */
+  .tabs{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:4px;padding:9px 16px;
+    background:var(--bg);border-bottom:1px solid var(--line)}
+  .tab{appearance:none;border:0;background:none;font:inherit;font-size:13.5px;font-weight:700;color:var(--tx-dim);
+    cursor:pointer;padding:7px 12px;border-radius:9px;transition:color .14s,background .14s}
+  .tab:hover{color:var(--tx-mut);background:var(--raise)}
+  .tab.active{color:var(--tx);background:var(--raise)}
+  .tab:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px}
+  .tabs .spacer{margin-left:auto}
+  .cloud{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-dim)}
+  .cloud.ok{color:#7fa86b}
+  .cloud svg{width:12px;height:12px}
+  .icon-btn{appearance:none;border:0;background:var(--raise);color:var(--tx-mut);cursor:pointer;
+    border-radius:9px;padding:7px 10px;font:inherit;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+  .icon-btn:hover{color:var(--tx);background:var(--raise-2)}
+  .icon-btn svg{width:13px;height:13px}
+
+  .status{font-size:10.5px;font-weight:600;text-align:center;padding:6px 10px;border-bottom:1px solid var(--line-soft);line-height:1.4}
+  .status.demo{color:#cf935f;background:rgba(194,86,11,.08)}
+  .status.error{color:#e08a6a;background:rgba(180,60,40,.1)}
+
+  .view{display:none}
+  .view.show{display:block}
+  .body{padding:16px 16px 200px}
+
+  /* ── 공통 입력행 ── */
+  .add-row{display:flex;gap:6px;background:var(--raise);border-radius:14px;padding:6px;position:relative}
+  .add-row input,.add-row textarea{flex:1;min-width:0;background:none;border:0;color:var(--tx);
+    border-radius:0;padding:9px 12px;font:inherit;font-size:13.5px;resize:none}
+  .add-row input:focus,.add-row textarea:focus{outline:none}
+  .add-row input::placeholder,.add-row textarea::placeholder{color:var(--tx-dim)}
+  .add-row textarea{min-height:74px;line-height:1.6}
+  .add-btn{flex:none;appearance:none;font:inherit;font-size:12px;font-weight:700;border-radius:var(--radius-sm);
+    padding:0 16px;cursor:pointer;border:0;background:var(--accent);color:#fff;
+    display:inline-flex;align-items:center;gap:5px;transition:background .15s,transform .05s}
+  .add-btn:hover{background:var(--accent-bright)}
+  .add-btn:active{transform:translateY(1px)}
+  .add-btn:disabled{opacity:.5;cursor:default}
+  .add-btn .p{font-size:14px;font-weight:800;line-height:1}
+  .add-row.col{flex-direction:column;align-items:stretch}
+  .add-row.col textarea{padding:10px 12px}
+  .add-btn.wide{justify-content:center;padding:11px}
+
+  /* 자동완성 */
+  .ac{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:45;background:var(--raise);
+    border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:var(--shadow);max-height:260px;overflow:auto}
+  .ac .ai{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;cursor:pointer;font-size:12.5px;color:var(--tx)}
+  .ac .ai .aen{font-weight:700;white-space:nowrap}
+  .ac .ai .ako{color:var(--tx-dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0}
+  .ac .ai .acat{margin-left:auto;flex:none;font-size:9.5px;color:var(--tx-dim);background:var(--bg);border:1px solid var(--line-soft);border-radius:999px;padding:1px 7px}
+  .ac .ai:hover,.ac .ai.active{background:var(--raise-2)}
+  .ac .ai.active{outline:1px solid var(--accent);outline-offset:-1px}
+
+  .section-label{font-size:10px;color:var(--tx-dim);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin:20px 2px 9px;display:flex;align-items:center;gap:8px}
+  .section-label .hint{font-weight:600;text-transform:none;letter-spacing:0;color:var(--tx-dim)}
+  .section-label .link{margin-left:auto;appearance:none;border:0;background:none;color:var(--accent-soft);font:inherit;font-size:11px;font-weight:700;cursor:pointer;padding:3px 7px;border-radius:6px;text-transform:none;letter-spacing:0}
+  .section-label .link:hover{background:var(--accent-tint)}
+
+  /* ── 프리셋 칩 ── */
+  .presets{display:flex;flex-wrap:wrap;gap:6px}
+  .pchip{appearance:none;font:inherit;font-size:12px;font-weight:650;border:1px solid var(--line);background:var(--raise);
+    color:var(--tx-mut);border-radius:999px;padding:6px 12px;cursor:pointer;transition:.13s;display:inline-flex;align-items:center;gap:6px;position:relative}
+  .pchip:hover{color:var(--tx);border-color:var(--btn-hover-line,var(--line));background:var(--raise-2)}
+  .pchip .pn{font-size:10px;color:var(--tx-dim);font-variant-numeric:tabular-nums}
+  /* 추천(절반 이상 포함): 따뜻한 주황 — '클릭하고 싶게' */
+  .pchip.rec{background:var(--rec-tint);border-color:var(--rec);color:var(--rec-bright)}
+  .pchip.rec .pn{color:var(--rec-bright)}
+  .pchip.rec:hover{background:var(--rec-tint-2)}
+  /* 전부 포함(적용됨) */
+  .pchip.applied{background:var(--accent);border-color:var(--accent);color:#fff}
+  .pchip.applied .pn{color:rgba(255,255,255,.8)}
+  .pchip.save{border-style:dashed;color:var(--tx-dim);background:none}
+  .pchip.save:hover{color:var(--accent-soft);border-color:var(--accent)}
+  .pchip .pdel{appearance:none;border:0;background:none;color:inherit;opacity:.55;cursor:pointer;padding:0;margin:-2px -4px -2px 0;width:15px;height:15px;display:grid;place-items:center;border-radius:50%}
+  .pchip .pdel:hover{opacity:1;background:rgba(0,0,0,.12)}
+  .pchip .pdel svg{width:9px;height:9px}
+
+  /* ── 분류 칩 ── */
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{appearance:none;font:inherit;font-size:11px;font-weight:600;flex:none;border:0;background:var(--raise-2);color:var(--tx-mut);
+    border-radius:999px;padding:5px 11px;cursor:pointer;transition:.13s;display:inline-flex;align-items:center;gap:5px}
+  .chip:hover{color:var(--tx);background:var(--raise)}
+  .chip[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .chip .n{font-size:10px;color:var(--tx-dim)}
+  .chip[aria-pressed="true"] .n{color:rgba(255,255,255,.75)}
+  .chip.clear{background:none;color:var(--tx-dim);border:1px dashed var(--line)}
+
+  .search{display:flex;align-items:center;gap:7px;background:var(--raise);border:0;border-radius:var(--radius-sm);padding:7px 10px;margin:9px 0}
+  .search svg{width:13px;height:13px;color:var(--tx-dim);flex:none}
+  .search input{flex:1;background:none;border:0;color:var(--tx);font:inherit;font-size:12.5px;outline:none}
+  .search input::placeholder{color:var(--tx-dim)}
+  .search .x{appearance:none;border:0;background:none;color:var(--tx-dim);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
+  .search .x:hover{color:var(--tx)}
+
+  /* ── 단어장 그리드 (영어 위 · 한글 아래) ── */
+  .lib{display:flex;flex-wrap:wrap;gap:7px}
+  .wrow{position:relative;display:flex;align-items:center;gap:6px;max-width:300px;background:var(--raise);border:1.5px solid transparent;
+    border-radius:10px;padding:6px 11px;cursor:pointer;transition:background .12s,border-color .12s;text-align:left}
+  .wrow:hover{background:var(--raise-2)}
+  .wrow:focus-visible{outline:2px solid var(--accent-bright);outline-offset:1px}
+  .wrow.in{background:var(--accent-tint);border-color:var(--accent)}
+  .wrow .wtx{display:flex;flex-direction:column;min-width:0}
+  .wrow .we{font-size:12.5px;font-weight:700;color:var(--tx);line-height:1.25;overflow-wrap:anywhere}
+  .wrow .wk{font-size:10.5px;color:var(--tx-mut);line-height:1.2;overflow-wrap:anywhere}
+  .wrow .wk.untr{color:var(--tx-dim);font-style:italic}
+  .wrow.in .we{color:var(--accent-soft)}
+  .wrow .wck{flex:none;width:15px;height:15px;display:none;place-items:center;color:var(--accent-soft)}
+  .wrow.in .wck{display:grid}
+  .wrow .wck svg{width:13px;height:13px}
+
+  .empty{text-align:center;padding:24px 16px;color:var(--tx-dim);background:var(--raise);border-radius:var(--radius)}
+  .empty .big{font-size:23px;margin-bottom:8px;opacity:.8}
+  .empty p{margin:0;font-size:12px;line-height:1.6}
+
+  /* ── 분리 결과(가져오기) ── */
+  .parsed{margin-top:14px;border-radius:var(--radius);background:var(--raise);padding:12px}
+  .parsed-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .seg-label{font-size:10px;color:var(--tx-dim);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+  .parsed-head .link{margin-left:auto;appearance:none;border:0;background:none;color:var(--tx-mut);font:inherit;font-size:11px;font-weight:650;cursor:pointer;padding:3px 7px;border-radius:6px}
+  .parsed-head .link:hover{color:var(--accent-soft);background:var(--raise-2)}
+  .parsed-head .link.ai{color:var(--accent-soft)}
+  .tokens{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px}
+  .tok{display:inline-flex;align-items:baseline;gap:5px;background:var(--bg);border:1.5px solid transparent;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px;color:var(--tx);position:relative;white-space:nowrap;transition:border-color .12s,background .12s}
+  .tok .en{font-weight:700}
+  .tok .ko{font-size:11px;color:var(--tx-mut)}
+  .tok .ko.untr{color:var(--tx-dim);font-style:italic}
+  .tok .flag{position:absolute;top:-9px;right:-6px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:5px;opacity:0;transform:translateY(3px);transition:.12s;pointer-events:none;white-space:nowrap}
+  .tok:hover{border-color:var(--accent);background:var(--accent-tint)}
+  .tok:hover .flag{opacity:1;transform:translateY(0)}
+  .tok.sel{border-color:var(--accent);background:var(--accent-tint-2);color:var(--accent-soft)}
+  .tok.sel .flag{opacity:1;transform:translateY(0)}
+  .tok.exists{border-style:dashed;border-color:var(--line)}
+  .tok.exists.sel{border-style:solid}
+  .parsed-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{appearance:none;font:inherit;font-size:12px;font-weight:650;border-radius:8px;padding:8px 13px;cursor:pointer;border:0;background:var(--raise-2);color:var(--tx);transition:background .15s,transform .05s}
+  .btn:hover{background:var(--line)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:none;color:var(--tx-mut)}
+  .btn.ghost:hover{color:var(--tx);background:var(--raise-2)}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-bright)}
+  .btn:disabled{opacity:.45;cursor:default}
+
+  .note{margin-top:14px;font-size:11.5px;line-height:1.7;color:var(--tx-dim);background:var(--raise);border-radius:var(--radius);padding:14px 15px}
+  .note b{color:var(--accent-soft);font-weight:700}
+
+  /* ── 하단 조합 도크 (뜻 확인 가능) ── */
+  .dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--dock-bg)}
+  .dock-in{max-width:720px;margin:0 auto;padding:11px 16px calc(12px + env(safe-area-inset-bottom))}
+  .dock-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .dock-top .t{font-size:10px;font-weight:700;color:var(--dock-dim);text-transform:uppercase;letter-spacing:.6px}
+  .dock-top .c{font-size:10.5px;color:var(--dock-dim);font-variant-numeric:tabular-nums}
+  .dock-top .acts{margin-left:auto;display:flex;gap:6px}
+  .dock-top .acts button{appearance:none;border:0;border-radius:9px;padding:7px 13px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .dsave{background:rgba(255,255,255,.10);color:var(--dock-tx)}
+  .dsave:hover{background:rgba(255,255,255,.18)}
+  .dclear{background:none;color:var(--dock-dim)}
+  .dclear:hover{color:var(--dock-tx)}
+  .dcopy{background:var(--accent);color:#fff}
+  .dcopy:hover{background:var(--accent-bright)}
+  .dock-tokens{display:flex;flex-wrap:wrap;gap:6px;max-height:148px;overflow:auto}
+  .dtok{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);
+    border-radius:8px;padding:4px 5px 4px 9px}
+  .dtok .dtx{display:flex;flex-direction:column;line-height:1.15}
+  .dtok .de{font-size:12px;font-weight:700;color:var(--dock-tx);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .dtok .dk{font-size:9.5px;color:var(--dock-dim)}
+  .dtok .x{appearance:none;border:0;background:none;color:var(--dock-dim);cursor:pointer;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;padding:0}
+  .dtok .x:hover{background:rgba(255,255,255,.15);color:#fff}
+  .dtok .x svg{width:9px;height:9px;display:block}
+  .dock-empty{font-size:12px;color:var(--dock-dim);padding:6px 2px}
+  .dock-preview{margin-top:9px;font-size:10.5px;line-height:1.5;color:var(--dock-dim);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    word-break:break-word;border-top:1px solid rgba(255,255,255,.07);padding-top:8px}
+  .dock.is-empty .dock-tokens,.dock.is-empty .acts,.dock.is-empty .dock-preview{display:none}
+  .dock:not(.is-empty) .dock-empty{display:none}
+
+  /* 토스트 */
+  .toast{position:fixed;bottom:160px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--dock-bg);color:#fff;
+    font-size:12px;font-weight:600;padding:8px 14px;border-radius:9px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;z-index:60}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:430px){.tab{font-size:12.5px;padding:7px 9px}}
+</style>
+</head>
+<body>
+  <div class="panel" role="application" aria-label="프롬프트 스튜디오">
+    <div class="tabs" role="tablist">
+      <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="compose">작성하기</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-tab="import">가져오기</button>
+      <span class="spacer"></span>
+      <span class="cloud" id="cloud" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span id="cloudTxt"></span></span>
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="테마 변경">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg></button>
+    </div>
+
+    <div class="status" id="status" hidden></div>
+
+    <!-- ───────── 작성하기 ───────── -->
+    <section class="view show" data-view="compose" role="tabpanel">
+      <div class="body">
+        <div class="add-row">
+          <input id="word" type="text" placeholder="단어 입력 후 Enter로 담기 · 자동완성" autocomplete="off">
+          <button class="add-btn" id="addWordBtn"><span class="p">+</span>담기</button>
+          <div class="ac" id="acBox" hidden></div>
+        </div>
+
+        <div class="section-label">프리셋 세트 <span class="hint">· 누르면 단어 묶음이 한 번에 담겨요</span></div>
+        <div class="presets" id="presets"></div>
+
+        <div class="section-label">단어장 <span class="hint">· 영어 단어 + 한글 뜻 · 눌러서 담기</span></div>
+        <div class="chips" id="chips"></div>
+        <div class="search" id="searchBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="searchInput" type="text" placeholder="영어·한글 검색" autocomplete="off">
+          <button class="x" id="searchClear" hidden aria-label="검색 지우기">×</button>
+        </div>
+        <div class="lib" id="lib"></div>
+      </div>
+    </section>
+
+    <!-- ───────── 가져오기 ───────── -->
+    <section class="view" data-view="import" role="tabpanel" hidden>
+      <div class="body">
+        <div class="add-row col">
+          <textarea id="importInput" placeholder="프롬프트를 붙여넣으세요 · 비우고 누르면 클립보드에서 가져옵니다"></textarea>
+          <button class="add-btn wide" id="splitBtn">붙여넣은 프롬프트 분리하기</button>
+        </div>
+
+        <div class="parsed" id="parsedWrap" hidden>
+          <div class="parsed-head">
+            <span class="seg-label">분리 결과 · 뜻 확인 후 선택</span>
+            <button class="link ai" id="aiFill" hidden>AI로 뜻 채우기</button>
+            <button class="link" id="selectAll">전체</button>
+          </div>
+          <div class="tokens" id="tokens"></div>
+          <div class="parsed-foot">
+            <button class="btn ghost" id="cancelParse">취소</button>
+            <button class="btn" id="saveLib">단어장에 저장 <span id="saveN"></span></button>
+            <button class="btn primary" id="toCompose">작성에 담기 <span id="composeN"></span></button>
+          </div>
+        </div>
+
+        <div class="note">
+          <b>가져오기</b>는 다른 곳에서 만든 프롬프트를 붙여넣어 <b>단어별 뜻을 확인</b>하고,
+          마음에 드는 단어를 골라 <b>작성하기</b>로 담거나 <b>단어장</b>에 저장하는 곳이에요.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 하단 조합 도크 (작성하기에서만 노출) -->
+  <div class="dock is-empty" id="dock">
+    <div class="dock-in">
+      <div class="dock-top">
+        <span class="t">조합</span>
+        <span class="c" id="dockCount"></span>
+        <span class="acts">
+          <button class="dsave" id="savePreset">세트 저장</button>
+          <button class="dclear" id="clearAll">비우기</button>
+          <button class="dcopy" id="copyAll">복사</button>
+        </span>
+      </div>
+      <div class="dock-empty">아래 단어나 프리셋을 눌러 프롬프트를 만들어 보세요</div>
+      <div class="dock-tokens" id="dockTokens"></div>
+      <div class="dock-preview" id="dockPreview"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   프롬프트 스튜디오 · 데이터
+   (BUILTIN: 큐레이션 단어 사전 / BUILTIN_PRESETS: 기본 프리셋)
+   ============================================================ */
+/*__BUILTIN_START__*/
+const BUILTIN=[{"e":"woman","k":"여성","c":"인물"},{"e":"a woman","k":"여성","c":"인물"},{"e":"man","k":"남성","c":"인물"},{"e":"a man","k":"남성","c":"인물"},{"e":"girl","k":"소녀","c":"인물"},{"e":"a girl","k":"소녀","c":"인물"},{"e":"boy","k":"소년","c":"인물"},{"e":"a boy","k":"소년","c":"인물"},{"e":"young woman","k":"젊은 여성","c":"인물"},{"e":"a young woman","k":"젊은 여성","c":"인물"},{"e":"young man","k":"젊은 남성","c":"인물"},{"e":"beautiful woman","k":"아름다운 여성","c":"인물"},{"e":"handsome man","k":"잘생긴 남성","c":"인물"},{"e":"pretty girl","k":"예쁜 소녀","c":"인물"},{"e":"old man","k":"노인","c":"인물"},{"e":"old woman","k":"노년 여성","c":"인물"},{"e":"elderly","k":"노인","c":"인물"},{"e":"middle-aged man","k":"중년 남성","c":"인물"},{"e":"middle-aged woman","k":"중년 여성","c":"인물"},{"e":"child","k":"아이","c":"인물"},{"e":"children","k":"아이들","c":"인물"},{"e":"baby","k":"아기","c":"인물"},{"e":"toddler","k":"유아","c":"인물"},{"e":"teenager","k":"십 대","c":"인물"},{"e":"teen","k":"십 대","c":"인물"},{"e":"kid","k":"아이","c":"인물"},{"e":"female","k":"여성","c":"인물"},{"e":"male","k":"남성","c":"인물"},{"e":"person","k":"사람","c":"인물"},{"e":"people","k":"사람들","c":"인물"},{"e":"couple","k":"커플","c":"인물"},{"e":"group","k":"단체","c":"인물"},{"e":"crowd","k":"군중","c":"인물"},{"e":"family","k":"가족","c":"인물"},{"e":"lady","k":"숙녀","c":"인물"},{"e":"gentleman","k":"신사","c":"인물"},{"e":"model","k":"모델","c":"인물"},{"e":"fashion model","k":"패션 모델","c":"인물"},{"e":"portrait","k":"인물 사진","c":"인물"},{"e":"self portrait","k":"자화상","c":"인물"},{"e":"businessman","k":"비즈니스맨","c":"인물"},{"e":"businesswoman","k":"커리어 우먼","c":"인물"},{"e":"student","k":"학생","c":"인물"},{"e":"soldier","k":"군인","c":"인물"},{"e":"warrior","k":"전사","c":"인물"},{"e":"knight","k":"기사","c":"인물"},{"e":"king","k":"왕","c":"인물"},{"e":"queen","k":"여왕","c":"인물"},{"e":"princess","k":"공주","c":"인물"},{"e":"prince","k":"왕자","c":"인물"},{"e":"witch","k":"마녀","c":"인물"},{"e":"wizard","k":"마법사","c":"인물"},{"e":"angel","k":"천사","c":"인물"},{"e":"fairy","k":"요정","c":"인물"},{"e":"mermaid","k":"인어","c":"인물"},{"e":"vampire","k":"뱀파이어","c":"인물"},{"e":"robot","k":"로봇","c":"인물"},{"e":"cyborg","k":"사이보그","c":"인물"},{"e":"android","k":"안드로이드","c":"인물"},{"e":"alien","k":"외계인","c":"인물"},{"e":"ghost","k":"유령","c":"인물"},{"e":"goddess","k":"여신","c":"인물"},{"e":"samurai","k":"사무라이","c":"인물"},{"e":"ninja","k":"닌자","c":"인물"},{"e":"pirate","k":"해적","c":"인물"},{"e":"astronaut","k":"우주비행사","c":"인물"},{"e":"cowboy","k":"카우보이","c":"인물"},{"e":"superhero","k":"슈퍼히어로","c":"인물"},{"e":"monster","k":"괴물","c":"인물"},{"e":"dragon","k":"용","c":"인물"},{"e":"scientist","k":"과학자","c":"인물"},{"e":"doctor","k":"의사","c":"인물"},{"e":"nurse","k":"간호사","c":"인물"},{"e":"chef","k":"요리사","c":"인물"},{"e":"artist","k":"예술가","c":"인물"},{"e":"painter","k":"화가","c":"인물"},{"e":"dancer","k":"댄서","c":"인물"},{"e":"singer","k":"가수","c":"인물"},{"e":"musician","k":"음악가","c":"인물"},{"e":"athlete","k":"운동선수","c":"인물"},{"e":"police officer","k":"경찰관","c":"인물"},{"e":"firefighter","k":"소방관","c":"인물"},{"e":"face","k":"얼굴","c":"인물"},{"e":"skin","k":"피부","c":"인물"},{"e":"eyes","k":"눈","c":"인물"},{"e":"nose","k":"코","c":"인물"},{"e":"lips","k":"입술","c":"인물"},{"e":"red lips","k":"붉은 입술","c":"인물"},{"e":"mouth","k":"입","c":"인물"},{"e":"teeth","k":"치아","c":"인물"},{"e":"hands","k":"손","c":"인물"},{"e":"fingers","k":"손가락","c":"인물"},{"e":"legs","k":"다리","c":"인물"},{"e":"body","k":"몸","c":"인물"},{"e":"muscular","k":"근육질","c":"인물"},{"e":"slim","k":"날씬한","c":"인물"},{"e":"tall","k":"키 큰","c":"인물"},{"e":"freckles","k":"주근깨","c":"인물"},{"e":"dimples","k":"보조개","c":"인물"},{"e":"rosy cheeks","k":"발그레한 볼","c":"인물"},{"e":"sharp jawline","k":"날렵한 턱선","c":"인물"},{"e":"wrinkles","k":"주름","c":"인물"},{"e":"tattoo","k":"문신","c":"인물"},{"e":"scar","k":"흉터","c":"인물"},{"e":"makeup","k":"화장","c":"인물"},{"e":"glasses","k":"안경","c":"인물"},{"e":"sunglasses","k":"선글라스","c":"인물"},{"e":"hair","k":"머리카락","c":"인물"},{"e":"long hair","k":"긴 머리","c":"인물"},{"e":"short hair","k":"짧은 머리","c":"인물"},{"e":"wavy hair","k":"웨이브 머리","c":"인물"},{"e":"long wavy hair","k":"긴 웨이브 머리","c":"인물"},{"e":"curly hair","k":"곱슬머리","c":"인물"},{"e":"straight hair","k":"생머리","c":"인물"},{"e":"blonde hair","k":"금발","c":"인물"},{"e":"blonde","k":"금발","c":"인물"},{"e":"black hair","k":"검은 머리","c":"인물"},{"e":"brown hair","k":"갈색 머리","c":"인물"},{"e":"red hair","k":"빨간 머리","c":"인물"},{"e":"white hair","k":"백발","c":"인물"},{"e":"gray hair","k":"흰머리","c":"인물"},{"e":"silver hair","k":"은발","c":"인물"},{"e":"pink hair","k":"분홍 머리","c":"인물"},{"e":"blue hair","k":"파란 머리","c":"인물"},{"e":"ponytail","k":"포니테일","c":"인물"},{"e":"braids","k":"땋은 머리","c":"인물"},{"e":"bun","k":"올림머리","c":"인물"},{"e":"bob cut","k":"단발","c":"인물"},{"e":"bangs","k":"앞머리","c":"인물"},{"e":"bald","k":"대머리","c":"인물"},{"e":"beard","k":"수염","c":"인물"},{"e":"mustache","k":"콧수염","c":"인물"},{"e":"stubble","k":"까칠한 수염","c":"인물"},{"e":"blue eyes","k":"파란 눈","c":"인물"},{"e":"green eyes","k":"초록 눈","c":"인물"},{"e":"brown eyes","k":"갈색 눈","c":"인물"},{"e":"hazel eyes","k":"옅은 갈색 눈","c":"인물"},{"e":"black eyes","k":"검은 눈","c":"인물"},{"e":"gray eyes","k":"회색 눈","c":"인물"},{"e":"smile","k":"미소","c":"인물"},{"e":"smiling","k":"미소 짓는","c":"인물"},{"e":"laughing","k":"웃는","c":"인물"},{"e":"grin","k":"활짝 웃음","c":"인물"},{"e":"serious expression","k":"진지한 표정","c":"인물"},{"e":"serious","k":"진지한","c":"인물"},{"e":"sad","k":"슬픈","c":"인물"},{"e":"crying","k":"우는","c":"인물"},{"e":"angry","k":"화난","c":"인물"},{"e":"surprised","k":"놀란","c":"인물"},{"e":"calm","k":"차분한","c":"인물"},{"e":"confident","k":"자신감 있는","c":"인물"},{"e":"shy","k":"수줍은","c":"인물"},{"e":"happy","k":"행복한","c":"인물"},{"e":"thoughtful","k":"사색하는","c":"인물"},{"e":"looking at camera","k":"카메라 응시","c":"인물"},{"e":"looking away","k":"시선 돌림","c":"인물"},{"e":"looking back","k":"뒤돌아보는","c":"인물"},{"e":"eyes closed","k":"눈 감은","c":"인물"},{"e":"open mouth","k":"입 벌린","c":"인물"},{"e":"winking","k":"윙크","c":"인물"},{"e":"dress","k":"드레스","c":"인물"},{"e":"red dress","k":"빨간 드레스","c":"인물"},{"e":"white dress","k":"흰 드레스","c":"인물"},{"e":"black dress","k":"검은 드레스","c":"인물"},{"e":"wedding dress","k":"웨딩드레스","c":"인물"},{"e":"shirt","k":"셔츠","c":"인물"},{"e":"white shirt","k":"흰 셔츠","c":"인물"},{"e":"t-shirt","k":"티셔츠","c":"인물"},{"e":"blouse","k":"블라우스","c":"인물"},{"e":"jacket","k":"재킷","c":"인물"},{"e":"leather jacket","k":"가죽 재킷","c":"인물"},{"e":"denim jacket","k":"청자켓","c":"인물"},{"e":"coat","k":"코트","c":"인물"},{"e":"trench coat","k":"트렌치코트","c":"인물"},{"e":"suit","k":"정장","c":"인물"},{"e":"tuxedo","k":"턱시도","c":"인물"},{"e":"hoodie","k":"후드티","c":"인물"},{"e":"sweater","k":"스웨터","c":"인물"},{"e":"cardigan","k":"가디건","c":"인물"},{"e":"jeans","k":"청바지","c":"인물"},{"e":"pants","k":"바지","c":"인물"},{"e":"skirt","k":"치마","c":"인물"},{"e":"shorts","k":"반바지","c":"인물"},{"e":"kimono","k":"기모노","c":"인물"},{"e":"hanbok","k":"한복","c":"인물"},{"e":"uniform","k":"유니폼","c":"인물"},{"e":"school uniform","k":"교복","c":"인물"},{"e":"armor","k":"갑옷","c":"인물"},{"e":"cape","k":"망토","c":"인물"},{"e":"robe","k":"로브","c":"인물"},{"e":"hat","k":"모자","c":"인물"},{"e":"cap","k":"모자","c":"인물"},{"e":"beanie","k":"비니","c":"인물"},{"e":"scarf","k":"목도리","c":"인물"},{"e":"tie","k":"넥타이","c":"인물"},{"e":"gloves","k":"장갑","c":"인물"},{"e":"boots","k":"부츠","c":"인물"},{"e":"high heels","k":"하이힐","c":"인물"},{"e":"sneakers","k":"운동화","c":"인물"},{"e":"casual outfit","k":"캐주얼 복장","c":"인물"},{"e":"formal wear","k":"정장 차림","c":"인물"},{"e":"streetwear","k":"스트리트 패션","c":"인물"},{"e":"swimsuit","k":"수영복","c":"인물"},{"e":"bikini","k":"비키니","c":"인물"},{"e":"traditional clothing","k":"전통 의상","c":"인물"},{"e":"wearing glasses","k":"안경 착용","c":"인물"},{"e":"pose","k":"포즈","c":"포즈"},{"e":"posing","k":"포즈를 취한","c":"포즈"},{"e":"sitting","k":"앉아 있는","c":"포즈"},{"e":"standing","k":"서 있는","c":"포즈"},{"e":"running","k":"달리는","c":"포즈"},{"e":"walking","k":"걷는","c":"포즈"},{"e":"lying down","k":"누워 있는","c":"포즈"},{"e":"lying","k":"누워 있는","c":"포즈"},{"e":"jumping","k":"점프하는","c":"포즈"},{"e":"dancing","k":"춤추는","c":"포즈"},{"e":"kneeling","k":"무릎 꿇은","c":"포즈"},{"e":"leaning","k":"기댄","c":"포즈"},{"e":"crouching","k":"웅크린","c":"포즈"},{"e":"stretching","k":"기지개 켜는","c":"포즈"},{"e":"crossed arms","k":"팔짱","c":"포즈"},{"e":"arms crossed","k":"팔짱","c":"포즈"},{"e":"hands in pockets","k":"주머니에 손","c":"포즈"},{"e":"hands on hips","k":"허리에 손","c":"포즈"},{"e":"from behind","k":"뒤에서","c":"포즈"},{"e":"side view","k":"옆모습","c":"포즈"},{"e":"facing forward","k":"정면","c":"포즈"},{"e":"fighting","k":"싸우는","c":"포즈"},{"e":"flying","k":"나는","c":"포즈"},{"e":"floating","k":"떠 있는","c":"포즈"},{"e":"swimming","k":"수영하는","c":"포즈"},{"e":"reading","k":"책 읽는","c":"포즈"},{"e":"writing","k":"글 쓰는","c":"포즈"},{"e":"cooking","k":"요리하는","c":"포즈"},{"e":"sleeping","k":"자는","c":"포즈"},{"e":"drinking coffee","k":"커피 마시는","c":"포즈"},{"e":"holding a flower","k":"꽃을 든","c":"포즈"},{"e":"hugging","k":"포옹하는","c":"포즈"},{"e":"waving","k":"손 흔드는","c":"포즈"},{"e":"pointing","k":"가리키는","c":"포즈"},{"e":"praying","k":"기도하는","c":"포즈"},{"e":"forest","k":"숲","c":"장소·배경"},{"e":"city","k":"도시","c":"장소·배경"},{"e":"street","k":"거리","c":"장소·배경"},{"e":"city street","k":"도심 거리","c":"장소·배경"},{"e":"alley","k":"골목","c":"장소·배경"},{"e":"road","k":"길","c":"장소·배경"},{"e":"room","k":"방","c":"장소·배경"},{"e":"bedroom","k":"침실","c":"장소·배경"},{"e":"living room","k":"거실","c":"장소·배경"},{"e":"kitchen","k":"주방","c":"장소·배경"},{"e":"bathroom","k":"욕실","c":"장소·배경"},{"e":"office","k":"사무실","c":"장소·배경"},{"e":"classroom","k":"교실","c":"장소·배경"},{"e":"beach","k":"해변","c":"장소·배경"},{"e":"mountain","k":"산","c":"장소·배경"},{"e":"mountains","k":"산맥","c":"장소·배경"},{"e":"hill","k":"언덕","c":"장소·배경"},{"e":"cliff","k":"절벽","c":"장소·배경"},{"e":"valley","k":"계곡","c":"장소·배경"},{"e":"sky","k":"하늘","c":"장소·배경"},{"e":"night sky","k":"밤하늘","c":"장소·배경"},{"e":"field","k":"들판","c":"장소·배경"},{"e":"flower field","k":"꽃밭","c":"장소·배경"},{"e":"garden","k":"정원","c":"장소·배경"},{"e":"park","k":"공원","c":"장소·배경"},{"e":"cafe","k":"카페","c":"장소·배경"},{"e":"coffee shop","k":"커피숍","c":"장소·배경"},{"e":"restaurant","k":"레스토랑","c":"장소·배경"},{"e":"bar","k":"바","c":"장소·배경"},{"e":"studio","k":"스튜디오","c":"장소·배경"},{"e":"desert","k":"사막","c":"장소·배경"},{"e":"ocean","k":"바다","c":"장소·배경"},{"e":"sea","k":"바다","c":"장소·배경"},{"e":"lake","k":"호수","c":"장소·배경"},{"e":"river","k":"강","c":"장소·배경"},{"e":"waterfall","k":"폭포","c":"장소·배경"},{"e":"pond","k":"연못","c":"장소·배경"},{"e":"library","k":"도서관","c":"장소·배경"},{"e":"rooftop","k":"옥상","c":"장소·배경"},{"e":"balcony","k":"발코니","c":"장소·배경"},{"e":"bridge","k":"다리","c":"장소·배경"},{"e":"castle","k":"성","c":"장소·배경"},{"e":"palace","k":"궁전","c":"장소·배경"},{"e":"temple","k":"사원","c":"장소·배경"},{"e":"shrine","k":"신사","c":"장소·배경"},{"e":"church","k":"교회","c":"장소·배경"},{"e":"cathedral","k":"대성당","c":"장소·배경"},{"e":"ruins","k":"폐허","c":"장소·배경"},{"e":"cave","k":"동굴","c":"장소·배경"},{"e":"space","k":"우주","c":"장소·배경"},{"e":"outer space","k":"우주 공간","c":"장소·배경"},{"e":"underwater","k":"수중","c":"장소·배경"},{"e":"jungle","k":"정글","c":"장소·배경"},{"e":"swamp","k":"늪","c":"장소·배경"},{"e":"village","k":"마을","c":"장소·배경"},{"e":"town","k":"마을","c":"장소·배경"},{"e":"market","k":"시장","c":"장소·배경"},{"e":"train station","k":"기차역","c":"장소·배경"},{"e":"station","k":"역","c":"장소·배경"},{"e":"airport","k":"공항","c":"장소·배경"},{"e":"subway","k":"지하철","c":"장소·배경"},{"e":"highway","k":"고속도로","c":"장소·배경"},{"e":"skyscraper","k":"고층 빌딩","c":"장소·배경"},{"e":"building","k":"건물","c":"장소·배경"},{"e":"interior","k":"실내","c":"장소·배경"},{"e":"indoor","k":"실내","c":"장소·배경"},{"e":"outdoor","k":"야외","c":"장소·배경"},{"e":"background","k":"배경","c":"장소·배경"},{"e":"landscape","k":"풍경","c":"장소·배경"},{"e":"cityscape","k":"도시 풍경","c":"장소·배경"},{"e":"skyline","k":"스카이라인","c":"장소·배경"},{"e":"futuristic city","k":"미래 도시","c":"장소·배경"},{"e":"fantasy world","k":"판타지 세계","c":"장소·배경"},{"e":"battlefield","k":"전장","c":"장소·배경"},{"e":"graveyard","k":"묘지","c":"장소·배경"},{"e":"amusement park","k":"놀이공원","c":"장소·배경"},{"e":"school","k":"학교","c":"장소·배경"},{"e":"hospital","k":"병원","c":"장소·배경"},{"e":"spaceship","k":"우주선","c":"장소·배경"},{"e":"snow","k":"눈","c":"장소·배경"},{"e":"snowing","k":"눈 내리는","c":"장소·배경"},{"e":"rain","k":"비","c":"장소·배경"},{"e":"raining","k":"비 오는","c":"장소·배경"},{"e":"fog","k":"안개","c":"장소·배경"},{"e":"mist","k":"옅은 안개","c":"장소·배경"},{"e":"storm","k":"폭풍","c":"장소·배경"},{"e":"lightning","k":"번개","c":"장소·배경"},{"e":"wind","k":"바람","c":"장소·배경"},{"e":"sunset","k":"노을","c":"장소·배경"},{"e":"sunrise","k":"일출","c":"장소·배경"},{"e":"dawn","k":"새벽","c":"장소·배경"},{"e":"dusk","k":"황혼","c":"장소·배경"},{"e":"day","k":"낮","c":"장소·배경"},{"e":"night","k":"밤","c":"장소·배경"},{"e":"midnight","k":"한밤중","c":"장소·배경"},{"e":"clouds","k":"구름","c":"장소·배경"},{"e":"cloudy","k":"흐린","c":"장소·배경"},{"e":"stars","k":"별","c":"장소·배경"},{"e":"starry sky","k":"별이 빛나는 하늘","c":"장소·배경"},{"e":"moon","k":"달","c":"장소·배경"},{"e":"full moon","k":"보름달","c":"장소·배경"},{"e":"sun","k":"태양","c":"장소·배경"},{"e":"rainbow","k":"무지개","c":"장소·배경"},{"e":"fire","k":"불","c":"장소·배경"},{"e":"flames","k":"불꽃","c":"장소·배경"},{"e":"smoke","k":"연기","c":"장소·배경"},{"e":"dust","k":"먼지","c":"장소·배경"},{"e":"sparkles","k":"반짝임","c":"장소·배경"},{"e":"petals","k":"꽃잎","c":"장소·배경"},{"e":"falling leaves","k":"낙엽","c":"장소·배경"},{"e":"cherry blossoms","k":"벚꽃","c":"장소·배경"},{"e":"autumn","k":"가을","c":"장소·배경"},{"e":"spring","k":"봄","c":"장소·배경"},{"e":"winter","k":"겨울","c":"장소·배경"},{"e":"summer","k":"여름","c":"장소·배경"},{"e":"fall","k":"가을","c":"장소·배경"},{"e":"light","k":"빛","c":"조명"},{"e":"lighting","k":"조명","c":"조명"},{"e":"sunlight","k":"햇빛","c":"조명"},{"e":"sunbeam","k":"햇살","c":"조명"},{"e":"soft light","k":"부드러운 빛","c":"조명"},{"e":"soft lighting","k":"부드러운 조명","c":"조명"},{"e":"hard light","k":"강한 빛","c":"조명"},{"e":"golden hour","k":"골든아워","c":"조명"},{"e":"blue hour","k":"블루아워","c":"조명"},{"e":"backlight","k":"역광","c":"조명"},{"e":"backlighting","k":"역광","c":"조명"},{"e":"rim light","k":"림 라이트","c":"조명"},{"e":"rim lighting","k":"림 라이트","c":"조명"},{"e":"side lighting","k":"측면 조명","c":"조명"},{"e":"neon lights","k":"네온 조명","c":"조명"},{"e":"neon","k":"네온","c":"조명"},{"e":"candlelight","k":"촛불","c":"조명"},{"e":"moonlight","k":"달빛","c":"조명"},{"e":"volumetric lighting","k":"볼류메트릭 조명","c":"조명"},{"e":"studio lighting","k":"스튜디오 조명","c":"조명"},{"e":"dramatic lighting","k":"극적인 조명","c":"조명"},{"e":"cinematic lighting","k":"영화적 조명","c":"조명"},{"e":"natural light","k":"자연광","c":"조명"},{"e":"ambient light","k":"은은한 조명","c":"조명"},{"e":"spotlight","k":"스포트라이트","c":"조명"},{"e":"glow","k":"은은한 빛","c":"조명"},{"e":"glowing","k":"빛나는","c":"조명"},{"e":"god rays","k":"빛내림","c":"조명"},{"e":"lens flare","k":"렌즈 플레어","c":"조명"},{"e":"shadow","k":"그림자","c":"조명"},{"e":"shadows","k":"그림자","c":"조명"},{"e":"silhouette","k":"실루엣","c":"조명"},{"e":"high key","k":"하이키","c":"조명"},{"e":"low key","k":"로우키","c":"조명"},{"e":"bright","k":"밝은","c":"조명"},{"e":"dark","k":"어두운","c":"조명"},{"e":"close-up","k":"클로즈업","c":"카메라·구도"},{"e":"closeup","k":"클로즈업","c":"카메라·구도"},{"e":"close up","k":"클로즈업","c":"카메라·구도"},{"e":"extreme close-up","k":"익스트림 클로즈업","c":"카메라·구도"},{"e":"wide shot","k":"와이드 샷","c":"카메라·구도"},{"e":"long shot","k":"롱 샷","c":"카메라·구도"},{"e":"medium shot","k":"미디엄 샷","c":"카메라·구도"},{"e":"full body","k":"전신","c":"카메라·구도"},{"e":"full body shot","k":"전신 샷","c":"카메라·구도"},{"e":"upper body","k":"상반신","c":"카메라·구도"},{"e":"headshot","k":"얼굴 샷","c":"카메라·구도"},{"e":"portrait shot","k":"인물 샷","c":"카메라·구도"},{"e":"cowboy shot","k":"카우보이 샷","c":"카메라·구도"},{"e":"low angle","k":"로우 앵글","c":"카메라·구도"},{"e":"high angle","k":"하이 앵글","c":"카메라·구도"},{"e":"eye level","k":"눈높이","c":"카메라·구도"},{"e":"aerial view","k":"항공 뷰","c":"카메라·구도"},{"e":"bird's eye view","k":"조감도","c":"카메라·구도"},{"e":"top view","k":"위에서 본","c":"카메라·구도"},{"e":"worm's eye view","k":"앙각","c":"카메라·구도"},{"e":"dutch angle","k":"기울인 앵글","c":"카메라·구도"},{"e":"over the shoulder","k":"어깨너머 시점","c":"카메라·구도"},{"e":"point of view","k":"1인칭 시점","c":"카메라·구도"},{"e":"pov","k":"1인칭 시점","c":"카메라·구도"},{"e":"first person view","k":"1인칭 시점","c":"카메라·구도"},{"e":"depth of field","k":"얕은 심도","c":"카메라·구도"},{"e":"shallow depth of field","k":"얕은 심도","c":"카메라·구도"},{"e":"bokeh","k":"보케","c":"카메라·구도"},{"e":"macro","k":"매크로","c":"카메라·구도"},{"e":"motion blur","k":"모션 블러","c":"카메라·구도"},{"e":"panorama","k":"파노라마","c":"카메라·구도"},{"e":"symmetry","k":"대칭","c":"카메라·구도"},{"e":"symmetrical","k":"대칭적인","c":"카메라·구도"},{"e":"rule of thirds","k":"삼분할 구도","c":"카메라·구도"},{"e":"centered composition","k":"중앙 구도","c":"카메라·구도"},{"e":"wide angle","k":"광각","c":"카메라·구도"},{"e":"telephoto","k":"망원","c":"카메라·구도"},{"e":"fisheye","k":"어안","c":"카메라·구도"},{"e":"35mm","k":"35mm","c":"카메라·구도"},{"e":"50mm","k":"50mm","c":"카메라·구도"},{"e":"85mm","k":"85mm","c":"카메라·구도"},{"e":"focal length","k":"초점 거리","c":"카메라·구도"},{"e":"photorealistic","k":"실사풍","c":"스타일"},{"e":"realistic","k":"사실적인","c":"스타일"},{"e":"hyperrealistic","k":"초사실주의","c":"스타일"},{"e":"photo","k":"사진","c":"스타일"},{"e":"photograph","k":"사진","c":"스타일"},{"e":"cinematic","k":"영화 같은","c":"스타일"},{"e":"film still","k":"영화 한 장면","c":"스타일"},{"e":"anime","k":"애니메이션","c":"스타일"},{"e":"anime style","k":"애니메이션풍","c":"스타일"},{"e":"manga","k":"만화","c":"스타일"},{"e":"cartoon","k":"만화풍","c":"스타일"},{"e":"illustration","k":"일러스트","c":"스타일"},{"e":"digital art","k":"디지털 아트","c":"스타일"},{"e":"digital painting","k":"디지털 페인팅","c":"스타일"},{"e":"oil painting","k":"유화","c":"스타일"},{"e":"watercolor","k":"수채화","c":"스타일"},{"e":"acrylic painting","k":"아크릴화","c":"스타일"},{"e":"sketch","k":"스케치","c":"스타일"},{"e":"pencil sketch","k":"연필 스케치","c":"스타일"},{"e":"line art","k":"라인 아트","c":"스타일"},{"e":"ink drawing","k":"잉크화","c":"스타일"},{"e":"charcoal drawing","k":"목탄화","c":"스타일"},{"e":"pixel art","k":"픽셀 아트","c":"스타일"},{"e":"concept art","k":"컨셉 아트","c":"스타일"},{"e":"3d render","k":"3D 렌더","c":"스타일"},{"e":"3d","k":"3D","c":"스타일"},{"e":"cgi","k":"CG","c":"스타일"},{"e":"octane render","k":"옥테인 렌더","c":"스타일"},{"e":"unreal engine","k":"언리얼 엔진","c":"스타일"},{"e":"studio ghibli","k":"지브리풍","c":"스타일"},{"e":"disney style","k":"디즈니풍","c":"스타일"},{"e":"pixar style","k":"픽사풍","c":"스타일"},{"e":"comic book","k":"코믹북풍","c":"스타일"},{"e":"pop art","k":"팝 아트","c":"스타일"},{"e":"surrealism","k":"초현실주의","c":"스타일"},{"e":"impressionism","k":"인상주의","c":"스타일"},{"e":"minimalist","k":"미니멀","c":"스타일"},{"e":"minimalism","k":"미니멀리즘","c":"스타일"},{"e":"vaporwave","k":"베이퍼웨이브","c":"스타일"},{"e":"cyberpunk","k":"사이버펑크","c":"스타일"},{"e":"steampunk","k":"스팀펑크","c":"스타일"},{"e":"fantasy art","k":"판타지 아트","c":"스타일"},{"e":"sci-fi","k":"SF","c":"스타일"},{"e":"science fiction","k":"공상과학","c":"스타일"},{"e":"vintage","k":"빈티지","c":"스타일"},{"e":"retro","k":"레트로","c":"스타일"},{"e":"film grain","k":"필름 그레인","c":"스타일"},{"e":"abstract","k":"추상적인","c":"스타일"},{"e":"gothic","k":"고딕풍","c":"스타일"},{"e":"moody","k":"무드 있는","c":"분위기"},{"e":"dreamy","k":"몽환적인","c":"분위기"},{"e":"serene","k":"고요한","c":"분위기"},{"e":"peaceful","k":"평화로운","c":"분위기"},{"e":"dramatic","k":"극적인","c":"분위기"},{"e":"melancholic","k":"우울한","c":"분위기"},{"e":"cozy","k":"아늑한","c":"분위기"},{"e":"epic","k":"웅장한","c":"분위기"},{"e":"vibrant","k":"생동감 있는","c":"분위기"},{"e":"ethereal","k":"신비로운","c":"분위기"},{"e":"dark atmosphere","k":"어두운 분위기","c":"분위기"},{"e":"mysterious","k":"신비로운","c":"분위기"},{"e":"romantic","k":"로맨틱한","c":"분위기"},{"e":"nostalgic","k":"향수 어린","c":"분위기"},{"e":"eerie","k":"으스스한","c":"분위기"},{"e":"creepy","k":"섬뜩한","c":"분위기"},{"e":"cheerful","k":"명랑한","c":"분위기"},{"e":"gloomy","k":"음울한","c":"분위기"},{"e":"tranquil","k":"고요한","c":"분위기"},{"e":"energetic","k":"활기찬","c":"분위기"},{"e":"whimsical","k":"엉뚱한","c":"분위기"},{"e":"warm tones","k":"따뜻한 톤","c":"분위기"},{"e":"cool tones","k":"차가운 톤","c":"분위기"},{"e":"atmosphere","k":"분위기","c":"분위기"},{"e":"atmospheric","k":"분위기 있는","c":"분위기"},{"e":"mood","k":"분위기","c":"분위기"},{"e":"masterpiece","k":"마스터피스","c":"기타"},{"e":"best quality","k":"최고 품질","c":"기타"},{"e":"high quality","k":"고품질","c":"기타"},{"e":"highly detailed","k":"매우 디테일한","c":"기타"},{"e":"detailed","k":"디테일한","c":"기타"},{"e":"ultra detailed","k":"초정밀","c":"기타"},{"e":"intricate details","k":"정교한 디테일","c":"기타"},{"e":"8k","k":"8K","c":"기타"},{"e":"4k","k":"4K","c":"기타"},{"e":"hd","k":"고화질","c":"기타"},{"e":"sharp focus","k":"선명한 초점","c":"기타"},{"e":"in focus","k":"초점이 맞은","c":"기타"},{"e":"trending","k":"인기","c":"기타"},{"e":"award winning","k":"수상작급","c":"기타"},{"e":"professional","k":"전문적인","c":"기타"},{"e":"ultra realistic","k":"초사실적","c":"기타"},{"e":"hdr","k":"HDR","c":"기타"},{"e":"red","k":"빨강","c":"기타"},{"e":"blue","k":"파랑","c":"기타"},{"e":"green","k":"초록","c":"기타"},{"e":"yellow","k":"노랑","c":"기타"},{"e":"orange","k":"주황","c":"기타"},{"e":"purple","k":"보라","c":"기타"},{"e":"pink","k":"분홍","c":"기타"},{"e":"black","k":"검정","c":"기타"},{"e":"white","k":"하양","c":"기타"},{"e":"gray","k":"회색","c":"기타"},{"e":"grey","k":"회색","c":"기타"},{"e":"brown","k":"갈색","c":"기타"},{"e":"gold","k":"금색","c":"기타"},{"e":"golden","k":"금빛","c":"기타"},{"e":"silver","k":"은색","c":"기타"},{"e":"beige","k":"베이지","c":"기타"},{"e":"navy","k":"남색","c":"기타"},{"e":"teal","k":"청록","c":"기타"},{"e":"pastel colors","k":"파스텔 색","c":"기타"},{"e":"pastel","k":"파스텔","c":"기타"},{"e":"vibrant colors","k":"선명한 색","c":"기타"},{"e":"colorful","k":"다채로운","c":"기타"},{"e":"monochrome","k":"흑백","c":"기타"},{"e":"black and white","k":"흑백","c":"기타"},{"e":"sepia","k":"세피아","c":"기타"},{"e":"muted colors","k":"차분한 색감","c":"기타"},{"e":"neon colors","k":"네온 색","c":"기타"},{"e":"flowers","k":"꽃","c":"기타"},{"e":"flower","k":"꽃","c":"기타"},{"e":"rose","k":"장미","c":"기타"},{"e":"roses","k":"장미","c":"기타"},{"e":"tree","k":"나무","c":"기타"},{"e":"trees","k":"나무","c":"기타"},{"e":"grass","k":"풀","c":"기타"},{"e":"water","k":"물","c":"기타"},{"e":"glass","k":"유리","c":"기타"},{"e":"mirror","k":"거울","c":"기타"},{"e":"window","k":"창문","c":"기타"},{"e":"door","k":"문","c":"기타"},{"e":"book","k":"책","c":"기타"},{"e":"books","k":"책","c":"기타"},{"e":"candle","k":"양초","c":"기타"},{"e":"umbrella","k":"우산","c":"기타"},{"e":"balloon","k":"풍선","c":"기타"},{"e":"car","k":"자동차","c":"기타"},{"e":"sports car","k":"스포츠카","c":"기타"},{"e":"motorcycle","k":"오토바이","c":"기타"},{"e":"bicycle","k":"자전거","c":"기타"},{"e":"boat","k":"배","c":"기타"},{"e":"ship","k":"배","c":"기타"},{"e":"airplane","k":"비행기","c":"기타"},{"e":"train","k":"기차","c":"기타"},{"e":"guitar","k":"기타","c":"기타"},{"e":"piano","k":"피아노","c":"기타"},{"e":"sword","k":"검","c":"기타"},{"e":"gun","k":"총","c":"기타"},{"e":"crown","k":"왕관","c":"기타"},{"e":"jewelry","k":"보석","c":"기타"},{"e":"necklace","k":"목걸이","c":"기타"},{"e":"wings","k":"날개","c":"기타"},{"e":"mask","k":"가면","c":"기타"},{"e":"food","k":"음식","c":"기타"},{"e":"coffee","k":"커피","c":"기타"},{"e":"cake","k":"케이크","c":"기타"},{"e":"fruit","k":"과일","c":"기타"},{"e":"pan","k":"팬","c":"카메라·구도"},{"e":"panning shot","k":"패닝 샷","c":"카메라·구도"},{"e":"tilt","k":"틸트","c":"카메라·구도"},{"e":"tilt up","k":"틸트 업","c":"카메라·구도"},{"e":"tilt down","k":"틸트 다운","c":"카메라·구도"},{"e":"zoom in","k":"줌 인","c":"카메라·구도"},{"e":"zoom out","k":"줌 아웃","c":"카메라·구도"},{"e":"dolly shot","k":"달리 샷","c":"카메라·구도"},{"e":"dolly zoom","k":"달리 줌","c":"카메라·구도"},{"e":"tracking shot","k":"트래킹 샷","c":"카메라·구도"},{"e":"crane shot","k":"크레인 샷","c":"카메라·구도"},{"e":"handheld","k":"핸드헬드","c":"카메라·구도"},{"e":"handheld camera","k":"핸드헬드 카메라","c":"카메라·구도"},{"e":"gimbal shot","k":"짐벌 샷","c":"카메라·구도"},{"e":"steadicam","k":"스테디캠","c":"카메라·구도"},{"e":"orbit shot","k":"오빗 샷","c":"카메라·구도"},{"e":"camera shake","k":"카메라 흔들림","c":"카메라·구도"},{"e":"subtle camera shake","k":"미세한 카메라 흔들림","c":"카메라·구도"},{"e":"whip pan","k":"휩 팬","c":"카메라·구도"},{"e":"push in","k":"푸시 인","c":"카메라·구도"},{"e":"pull back","k":"풀백","c":"카메라·구도"},{"e":"drone shot","k":"드론 샷","c":"카메라·구도"},{"e":"aerial shot","k":"항공 샷","c":"카메라·구도"},{"e":"follow shot","k":"팔로우 샷","c":"카메라·구도"},{"e":"static shot","k":"고정 샷","c":"카메라·구도"},{"e":"locked-off shot","k":"락오프 샷","c":"카메라·구도"},{"e":"overhead shot","k":"오버헤드 샷","c":"카메라·구도"},{"e":"top-down shot","k":"탑다운 샷","c":"카메라·구도"},{"e":"establishing shot","k":"설정 샷","c":"카메라·구도"},{"e":"two shot","k":"투 샷","c":"카메라·구도"},{"e":"insert shot","k":"인서트 샷","c":"카메라·구도"},{"e":"360 spin","k":"360도 회전","c":"카메라·구도"},{"e":"slow motion","k":"슬로 모션","c":"카메라·구도"},{"e":"fast motion","k":"빠른 모션","c":"카메라·구도"},{"e":"time-lapse","k":"타임랩스","c":"카메라·구도"},{"e":"timelapse","k":"타임랩스","c":"카메라·구도"},{"e":"hyperlapse","k":"하이퍼랩스","c":"카메라·구도"},{"e":"freeze frame","k":"프리즈 프레임","c":"카메라·구도"},{"e":"bullet time","k":"불릿 타임","c":"카메라·구도"},{"e":"speed ramp","k":"스피드 램프","c":"카메라·구도"},{"e":"seamless loop","k":"심리스 루프","c":"카메라·구도"},{"e":"boomerang","k":"부메랑 루프","c":"카메라·구도"},{"e":"vertical video","k":"세로 영상","c":"카메라·구도"},{"e":"portrait mode","k":"인물 모드","c":"카메라·구도"},{"e":"selfie","k":"셀카","c":"카메라·구도"},{"e":"selfie video","k":"셀카 영상","c":"카메라·구도"},{"e":"mirror selfie","k":"거울 셀카","c":"카메라·구도"},{"e":"front camera","k":"전면 카메라","c":"카메라·구도"},{"e":"candid shot","k":"캔디드 샷","c":"카메라·구도"},{"e":"cinematic film","k":"시네마틱 영상","c":"스타일"},{"e":"film look","k":"필름 룩","c":"스타일"},{"e":"music video","k":"뮤직비디오","c":"스타일"},{"e":"vlog","k":"브이로그","c":"스타일"},{"e":"vlog style","k":"브이로그 스타일","c":"스타일"},{"e":"documentary style","k":"다큐멘터리 스타일","c":"스타일"},{"e":"b-roll","k":"B롤","c":"스타일"},{"e":"anamorphic","k":"아나모픽","c":"스타일"},{"e":"color graded","k":"컬러 그레이딩","c":"스타일"},{"e":"teal and orange","k":"틸 앤 오렌지","c":"스타일"},{"e":"super 8","k":"슈퍼 8","c":"스타일"},{"e":"vhs","k":"VHS","c":"스타일"},{"e":"vhs footage","k":"VHS 영상","c":"스타일"},{"e":"16mm film","k":"16mm 필름","c":"스타일"},{"e":"found footage","k":"파운드 푸티지","c":"스타일"},{"e":"commercial ad","k":"광고 영상","c":"스타일"},{"e":"analog film","k":"아날로그 필름","c":"스타일"},{"e":"retro film","k":"레트로 필름","c":"스타일"},{"e":"phone photo","k":"폰 사진","c":"스타일"},{"e":"iphone photo","k":"아이폰 사진","c":"스타일"},{"e":"smartphone photo","k":"스마트폰 사진","c":"스타일"},{"e":"snapshot","k":"스냅샷","c":"스타일"},{"e":"point-and-shoot","k":"똑딱이 카메라","c":"스타일"},{"e":"disposable camera","k":"일회용 카메라","c":"스타일"},{"e":"lo-fi","k":"로파이","c":"스타일"},{"e":"grainy","k":"거친 입자","c":"스타일"},{"e":"flash photography","k":"플래시 사진","c":"조명"},{"e":"direct flash","k":"직접 플래시","c":"조명"},{"e":"on-camera flash","k":"카메라 플래시","c":"조명"},{"e":"overexposed","k":"노출 과다","c":"조명"},{"e":"casual","k":"캐주얼한","c":"분위기"},{"e":"everyday moment","k":"일상 한 컷","c":"분위기"},{"e":"candid moment","k":"자연스러운 순간","c":"분위기"},{"e":"natural expression","k":"자연스러운 표정","c":"인물"},{"e":"genuine smile","k":"진심 어린 미소","c":"인물"},{"e":"natural pose","k":"자연스러운 포즈","c":"포즈"},{"e":"looking at phone","k":"폰 보는","c":"포즈"}];
+/*__BUILTIN_END__*/
+/*__PRESETS_START__*/
+const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자연스러운 일상 스냅 사진","words":["candid shot","snapshot","natural light","soft light","casual","everyday moment","looking away","35mm"]},{"id":"iphone","label":"아이폰 사진 세트","desc":"아이폰으로 찍은 듯한 사진","words":["iphone photo","portrait mode","natural light","depth of field","hdr","vibrant colors","sharp focus"]},{"id":"selfie-video","label":"셀피 영상 세트","desc":"전면 카메라 셀카 영상 느낌","words":["selfie video","front camera","handheld","vertical video","natural light","looking at camera","casual"]},{"id":"cinematic","label":"시네마틱 영상 세트","desc":"영화 같은 무빙·룩","words":["cinematic","cinematic lighting","anamorphic","teal and orange","shallow depth of field","dramatic","film grain","color graded"]},{"id":"portrait","label":"인물 포트레이트 세트","desc":"보케 살린 인물 사진","words":["portrait","headshot","85mm","soft light","shallow depth of field","bokeh","looking at camera"]},{"id":"golden-hour","label":"골든아워 무드","desc":"노을빛 역광 감성","words":["golden hour","backlight","warm tones","lens flare","silhouette","dreamy","soft light"]},{"id":"vintage-film","label":"빈티지 필름 세트","desc":"옛 필름 카메라 질감","words":["vintage","film grain","retro","super 8","analog film","muted colors","film still"]},{"id":"mono-mood","label":"흑백 무드 세트","desc":"명암 강한 흑백","words":["black and white","monochrome","dramatic lighting","shadows","low key","film grain","silhouette"]}];
+/*__PRESETS_END__*/
+</script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Supabase ---------- */
+  const SB_URL=(window.SUPABASE_URL||"").trim(), SB_KEY=(window.SUPABASE_ANON_KEY||"").trim();
+  const CONFIGURED = SB_URL && SB_KEY && SB_URL.indexOf("YOUR-PROJECT")===-1 && SB_KEY.indexOf("YOUR-ANON")===-1;
+  let sb=null;
+  if(CONFIGURED && window.supabase && window.supabase.createClient){ sb=window.supabase.createClient(SB_URL,SB_KEY); }
+
+  /* ---------- 로컬 저장 ---------- */
+  const store=(function(){
+    let mem={},ok=false;
+    try{localStorage.setItem("__t","1");localStorage.removeItem("__t");ok=true;}catch(e){ok=false;}
+    return{get(k){try{return ok?localStorage.getItem(k):(k in mem?mem[k]:null);}catch(e){return k in mem?mem[k]:null;}},
+      set(k,v){try{ok?localStorage.setItem(k,v):(mem[k]=v);}catch(e){mem[k]=v;}}};
+  })();
+  const K_PRESETS="promptStudio.presets", K_COMPOSE="promptStudio.compose", K_USAGE="promptStudio.usage";
+  function loadJSON(k,def){try{const r=store.get(k);if(r){const d=JSON.parse(r);return d;}}catch(e){}return def;}
+
+  const CATS=["인물","포즈","장소·배경","조명","카메라·구도","스타일","분위기","기타"];
+
+  /* ---------- 사전(번역·분류) ---------- */
+  const DICT={}, CATOF={};
+  BUILTIN.forEach(w=>{ const k=w.e.toLowerCase(); DICT[k]=w.k; CATOF[k]=w.c; });
+
+  function translate(en){
+    if(!en) return "";
+    const s=String(en).toLowerCase().trim().replace(/\s+/g," ");
+    if(DICT[s]) return DICT[s];
+    const a=s.replace(/^(a|an|the)\s+/,"");
+    if(DICT[a]) return DICT[a];
+    const h=a.replace(/[-_]/g," ");
+    if(DICT[h]) return DICT[h];
+    if(a.length>3 && a.charAt(a.length-1)==="s" && DICT[a.slice(0,-1)]) return DICT[a.slice(0,-1)];
+    return "";
+  }
+  // 사전에 없는(사용자) 단어 분류 추정 — 카메라·조명을 먼저 검사해 오분류 방지
+  const CAT_RULES=[
+    ["카메라·구도",["shot","angle","lens"," mm","mm)","close-up","closeup","close up","wide angle","depth of field","bokeh","macro","aerial","fisheye","full body","upper body","headshot","framing","composition","focal","pan","tilt","zoom","dolly","tracking","crane","handheld","gimbal","steadicam","orbit","camera shake","whip","drone","slow motion","time-lapse","timelapse","hyperlapse","freeze frame","bullet time","motion blur","pov","point of view","rule of thirds","symmetry","panorama"]],
+    ["조명",["light","lighting","sunlight","sunbeam","shadow","golden hour","blue hour","backlight","rim light","soft light","hard light","neon light","glow","candle","moonlight","volumetric","spotlight","god rays","lens flare","silhouette","high key","low key"]],
+    ["인물",["woman","man","girl","boy","female","male","person","people","child","baby","lady","gentleman","model","portrait","hair","eyes","face","skin","lips","freckles","beard","mustache","smile","smiling","expression","serious","wearing","dress","shirt","jacket","suit","outfit","clothes","clothing","uniform","makeup","glasses","hat"]],
+    ["포즈",["pose","posing","sitting","standing","running","walking","lying","jumping","dancing","crossed arms","arms crossed","hands in","hands on","from behind","looking back","leaning","kneeling","crouching","stretching","fighting","flying","floating","swimming","hugging","waving","pointing","praying","facing"]],
+    ["장소·배경",["forest","city","street","room","bedroom","beach","mountain","sky","field","garden","indoor","outdoor","background","landscape","cafe","desert","ocean","sea ","library","rooftop","balcony","bridge","castle","temple","cave","space","underwater","village","town","market","station","airport","building","interior","snow","rain","fog","storm","sunset","sunrise","dawn","dusk","night","clouds","stars","moon","autumn","winter","spring","summer","season"]],
+    ["스타일",["style","painting","anime","manga","cartoon","realistic","photorealistic","cinematic","render","3d","cgi","illustration","watercolor","oil ","sketch","pixel","concept art","ghibli","disney","pixar","comic","pop art","surreal","impression","minimal","vaporwave","cyberpunk","steampunk","fantasy art","sci-fi","vintage","retro","film grain","gothic","film","footage","anamorphic","vlog","documentary","b-roll","photo","photograph"]],
+    ["분위기",["mood","atmosphere","serene","dramatic","moody","dreamy","melancholic","cozy","epic","peaceful","vibrant","ethereal","mysterious","romantic","nostalgic","eerie","creepy","cheerful","gloomy","tranquil","energetic","whimsical","warm tone","cool tone","tones"]]
+  ];
+  function guessCat(en){const s=" "+String(en).toLowerCase()+" ";for(const[c,keys]of CAT_RULES)for(const k of keys)if(s.indexOf(k)!==-1)return c;return"기타";}
+
+  /* ---------- 상태 ---------- */
+  let userWords=[];                                   // Supabase words
+  let userPresets=loadJSON(K_PRESETS,[]);             // 사용자 프리셋
+  let compose=loadJSON(K_COMPOSE,[]);                 // [{en,ko}]
+  let usage=loadJSON(K_USAGE,{});                     // lower(en)->count
+  let activeCats=new Set(), query="";
+  let VOCAB=[], VMAP={};
+
+  const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const $=s=>document.querySelector(s);
+  const lc=s=>String(s||"").toLowerCase().trim();
+
+  /* ---------- DOM ---------- */
+  const wordInput=$("#word"), addWordBtn=$("#addWordBtn"), acBox=$("#acBox");
+  const presetsEl=$("#presets"), chipsEl=$("#chips"), libEl=$("#lib");
+  const searchBox=$("#searchBox"), searchInput=$("#searchInput"), searchClear=$("#searchClear");
+  const dock=$("#dock"), dockTokens=$("#dockTokens"), dockCount=$("#dockCount"), dockPreview=$("#dockPreview");
+  const importInput=$("#importInput"), splitBtn=$("#splitBtn"), parsedWrap=$("#parsedWrap"), tokensEl=$("#tokens");
+  const selectAllBtn=$("#selectAll"), cancelBtn=$("#cancelParse"), saveLibBtn=$("#saveLib"), toComposeBtn=$("#toCompose");
+  const saveNEl=$("#saveN"), composeNEl=$("#composeN"), aiFillBtn=$("#aiFill");
+  const statusEl=$("#status"), cloudEl=$("#cloud"), cloudTxt=$("#cloudTxt"), toastEl=$("#toast");
+  let toastTimer;
+  function toast(m){toastEl.textContent=m;toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1500);}
+
+  function setStatus(kind){
+    if(kind==="ok"){statusEl.hidden=true;cloudEl.hidden=false;cloudEl.className="cloud ok";cloudTxt.textContent="동기화됨";return;}
+    cloudEl.hidden=true;
+    if(kind==="local"){statusEl.hidden=true;return;}   // 로컬 단어가 없으면 굳이 안내 안 함
+    statusEl.hidden=false;statusEl.className="status demo";   // 앱은 기본 단어장으로 완전히 동작하므로 경고색(빨강) 대신 차분한 안내
+    statusEl.textContent = kind==="demo"
+      ? "로컬 모드 · config.js에 Supabase 키를 넣으면 내 단어가 클라우드에 저장돼요"
+      : "오프라인 · 기본 단어장으로 동작 중이에요 (내 저장 단어는 연결되면 동기화)";
+  }
+
+  /* ---------- 단어장(vocab) 구성 ---------- */
+  function buildVocab(){
+    const map={};
+    BUILTIN.forEach(w=>{ const k=w.e.toLowerCase(); map[k]={en:w.e,ko:w.k,cat:w.c,builtin:true,score:0}; });
+    userWords.forEach(u=>{ const k=lc(u.en); if(!k) return;
+      if(map[k]){ map[k].id=u.id; map[k].score=Math.max(map[k].score,u.count||0); }
+      else { map[k]={en:u.en,ko:(u.ko&&u.ko.trim())||translate(u.en),cat:CATOF[k]||u.cat||guessCat(u.en),id:u.id,score:(u.count||0)}; }
+    });
+    Object.keys(map).forEach(k=>{ map[k].score=(map[k].score||0)+(usage[k]||0); });
+    VMAP=map; VOCAB=Object.values(map);
+  }
+  function vocabKo(en){ const v=VMAP[lc(en)]; return v?v.ko:translate(en); }
+
+  /* ---------- 조합(compose) ---------- */
+  function composeHas(en){ const k=lc(en); return compose.some(c=>lc(c.en)===k); }
+  function addCompose(en){
+    en=String(en||"").trim(); if(!en) return false;
+    if(composeHas(en)) return false;
+    compose.push({en, ko:vocabKo(en)});
+    const k=lc(en); usage[k]=(usage[k]||0)+1; store.set(K_USAGE,JSON.stringify(usage));
+    // 사용자 단어면 Supabase 카운트도 best-effort 갱신
+    const v=VMAP[k]; if(v&&v.id&&sb){ sbUpdate(v.id,{count:(v.score||0)+1}).catch(()=>{}); }
+    persistCompose(); return true;
+  }
+  function removeCompose(en){ const k=lc(en); const i=compose.findIndex(c=>lc(c.en)===k); if(i>=0){compose.splice(i,1);persistCompose();return true;} return false; }
+  function toggleCompose(en){ if(composeHas(en)) removeCompose(en); else addCompose(en); buildVocab(); renderAll(); }
+  function persistCompose(){ store.set(K_COMPOSE,JSON.stringify(compose)); }
+
+  function renderDock(){
+    dockTokens.innerHTML="";
+    compose.forEach(c=>{
+      const t=document.createElement("span"); t.className="dtok";
+      t.innerHTML='<span class="dtx"><span class="de"></span><span class="dk"></span></span>'+
+        '<button class="x" type="button" aria-label="제거"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l6 6M10 4l-6 6"/></svg></button>';
+      t.querySelector(".de").textContent=c.en;
+      const k=c.ko||vocabKo(c.en);
+      const dk=t.querySelector(".dk"); if(k) dk.textContent=k; else dk.remove();
+      t.querySelector(".x").addEventListener("click",e=>{e.stopPropagation();removeCompose(c.en);buildVocab();renderAll();});
+      dockTokens.appendChild(t);
+    });
+    if(compose.length){
+      dock.classList.remove("is-empty");
+      dockCount.textContent=compose.length+"개";
+      dockPreview.textContent=compose.map(c=>c.en).join(", ");
+    }else{
+      dock.classList.add("is-empty"); dockCount.textContent="";
+    }
+  }
+
+  /* ---------- 프리셋 ---------- */
+  function allPresets(){
+    return BUILTIN_PRESETS.map(p=>Object.assign({},p,{user:false}))
+      .concat(userPresets.map(p=>Object.assign({},p,{user:true})));
+  }
+  function renderPresets(){
+    presetsEl.innerHTML="";
+    allPresets().forEach(p=>{
+      const words=p.words||[];
+      const present=words.filter(composeHas).length, total=words.length;
+      const ratio=total?present/total:0;
+      const b=document.createElement("button"); b.type="button"; b.className="pchip";
+      if(ratio>=1&&total) b.classList.add("applied");
+      else if(ratio>=0.5&&total) b.classList.add("rec");
+      b.title=(p.desc||"")+" · "+words.map(w=>w).join(", ");
+      const lab=document.createElement("span"); lab.className="pl"; lab.textContent=p.label; b.appendChild(lab);
+      const pn=document.createElement("span"); pn.className="pn"; pn.textContent=present+"/"+total; b.appendChild(pn);
+      b.addEventListener("click",()=>applyPreset(p));
+      if(p.user){
+        const del=document.createElement("button"); del.type="button"; del.className="pdel"; del.setAttribute("aria-label","세트 삭제");
+        del.innerHTML='<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l6 6M10 4l-6 6"/></svg>';
+        del.addEventListener("click",e=>{e.stopPropagation();deleteUserPreset(p.id);});
+        b.appendChild(del);
+      }
+      presetsEl.appendChild(b);
+    });
+    const save=document.createElement("button"); save.type="button"; save.className="pchip save";
+    save.textContent="+ 현재 조합 저장";
+    save.addEventListener("click",savePresetFromCompose);
+    presetsEl.appendChild(save);
+  }
+  function applyPreset(p){
+    const words=p.words||[]; if(!words.length) return;
+    const present=words.filter(composeHas).length;
+    if(present===words.length){ words.forEach(removeCompose); toast("‘"+p.label+"’ 해제"); }
+    else{ let n=0; words.forEach(w=>{ if(addCompose(w)) n++; }); toast("‘"+p.label+"’ +"+n+"개"); }
+    buildVocab(); renderAll();
+  }
+  function savePresetFromCompose(){
+    if(!compose.length){ toast("담긴 단어가 없어요"); return; }
+    const name=(window.prompt("이 조합을 어떤 이름으로 저장할까요?","내 세트")||"").trim();
+    if(!name) return;
+    userPresets.push({id:uid(),label:name,desc:"내 세트",words:compose.map(c=>c.en)});
+    store.set(K_PRESETS,JSON.stringify(userPresets));
+    renderPresets(); toast("‘"+name+"’ 세트 저장됨");
+  }
+  function deleteUserPreset(id){
+    userPresets=userPresets.filter(p=>p.id!==id);
+    store.set(K_PRESETS,JSON.stringify(userPresets));
+    renderPresets();
+  }
+
+  /* ---------- 분류 칩 ---------- */
+  function catCounts(){const c={};CATS.forEach(x=>c[x]=0);VOCAB.forEach(x=>{if(c[x.cat]!=null)c[x.cat]++;});return c;}
+  function renderChips(){
+    const counts=catCounts(); chipsEl.innerHTML="";
+    CATS.forEach(c=>{
+      if(!counts[c]) return;
+      const b=document.createElement("button"); b.className="chip"; b.type="button";
+      b.setAttribute("aria-pressed",activeCats.has(c)?"true":"false");
+      b.innerHTML=c+'<span class="n">'+counts[c]+'</span>';
+      b.addEventListener("click",()=>{activeCats.has(c)?activeCats.delete(c):activeCats.add(c);renderChips();renderLib();});
+      chipsEl.appendChild(b);
+    });
+    if(activeCats.size){
+      const clr=document.createElement("button"); clr.className="chip clear"; clr.type="button"; clr.textContent="전체";
+      clr.addEventListener("click",()=>{activeCats.clear();renderChips();renderLib();});
+      chipsEl.appendChild(clr);
+    }
+  }
+
+  /* ---------- 단어장 그리드 ---------- */
+  function visible(){
+    let items=VOCAB.slice();
+    if(activeCats.size) items=items.filter(x=>activeCats.has(x.cat));
+    if(query) items=items.filter(x=>x.en.toLowerCase().includes(query)||(x.ko||"").toLowerCase().includes(query));
+    items.sort((a,b)=>(b.score-a.score)||a.en.localeCompare(b.en));
+    return items;
+  }
+  function renderLib(){
+    const items=visible(); libEl.innerHTML="";
+    if(!items.length){
+      libEl.innerHTML='<div class="empty"><p>'+(query?"검색 결과가 없어요.":"표시할 단어가 없어요.")+'</p></div>';
+      return;
+    }
+    const frag=document.createDocumentFragment();
+    items.slice(0,1500).forEach(item=>{
+      const inComp=composeHas(item.en);
+      const b=document.createElement("button"); b.type="button"; b.className="wrow"+(inComp?" in":""); b.dataset.en=item.en;
+      const noko=!(item.ko&&item.ko.trim());
+      b.innerHTML='<span class="wtx"><span class="we"></span><span class="wk'+(noko?' untr':'')+'"></span></span>'+
+        '<span class="wck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4.5 4.5L19 7"/></svg></span>';
+      b.querySelector(".we").textContent=item.en;
+      b.querySelector(".wk").textContent=noko?"뜻 미등록":item.ko;
+      b.addEventListener("click",()=>toggleCompose(item.en));
+      frag.appendChild(b);
+    });
+    libEl.appendChild(frag);
+  }
+
+  /* ---------- 검색 ---------- */
+  searchInput.addEventListener("input",()=>{query=searchInput.value.trim().toLowerCase();searchClear.hidden=!query;renderLib();});
+  searchInput.addEventListener("keydown",e=>{if(e.key==="Escape"){searchInput.value="";query="";searchClear.hidden=true;renderLib();}});
+  searchClear.addEventListener("click",()=>{searchInput.value="";query="";searchClear.hidden=true;renderLib();searchInput.focus();});
+
+  /* ---------- 단어 입력 + 자동완성 ---------- */
+  let acItems=[], acActive=-1;
+  function closeAc(){ acBox.hidden=true; acBox.innerHTML=""; acItems=[]; acActive=-1; }
+  function renderAc(){
+    if(!acItems.length){ closeAc(); return; }
+    acBox.innerHTML="";
+    acItems.forEach((it,i)=>{
+      const d=document.createElement("div"); d.className="ai"+(i===acActive?" active":"");
+      d.innerHTML='<span class="aen"></span><span class="ako"></span><span class="acat"></span>';
+      d.querySelector(".aen").textContent=it.en;
+      d.querySelector(".ako").textContent=it.ko?("· "+it.ko):"";
+      d.querySelector(".acat").textContent=it.cat;
+      d.addEventListener("mousedown",e=>{ e.preventDefault(); acceptAc(i); });
+      d.addEventListener("mouseenter",()=>{ acActive=i; [...acBox.children].forEach((c,j)=>c.classList.toggle("active",j===i)); });
+      acBox.appendChild(d);
+    });
+    acBox.hidden=false;
+  }
+  function updateAc(){
+    const q=wordInput.value.trim().toLowerCase();
+    if(q.length<1){ closeAc(); return; }
+    const byUse=(a,b)=>b.score-a.score||a.en.localeCompare(b.en);
+    const starts=[], incl=[];
+    for(const x of VOCAB){
+      const en=x.en.toLowerCase(), ko=(x.ko||"").toLowerCase();
+      if(en===q){ continue; }
+      if(en.startsWith(q)) starts.push(x);
+      else if(en.includes(q)||ko.includes(q)) incl.push(x);
+    }
+    acItems=starts.sort(byUse).concat(incl.sort(byUse)).slice(0,8);
+    acActive=acItems.length?0:-1; renderAc();
+  }
+  function acceptAc(i){ const it=acItems[i]; if(!it) return; doAdd(it.en); }
+  function doAdd(text){
+    const parts=String(text||"").split(/[,\n]+/).map(s=>s.trim()).filter(Boolean);
+    if(!parts.length) return;
+    let n=0; parts.forEach(p=>{ if(addCompose(p)) n++; });
+    wordInput.value=""; closeAc(); buildVocab(); renderAll();
+    if(n) toast(n>1?(n+"개 담음"):"담음 · "+parts[0]); else toast("이미 담겨 있어요");
+    wordInput.focus();
+  }
+  wordInput.addEventListener("input",updateAc);
+  wordInput.addEventListener("focus",updateAc);
+  wordInput.addEventListener("blur",()=>setTimeout(closeAc,120));
+  wordInput.addEventListener("keydown",e=>{
+    const acOpen=!acBox.hidden && acItems.length;
+    if(acOpen){
+      if(e.key==="ArrowDown"){e.preventDefault();acActive=(acActive+1)%acItems.length;renderAc();return;}
+      if(e.key==="ArrowUp"){e.preventDefault();acActive=(acActive-1+acItems.length)%acItems.length;renderAc();return;}
+      if(e.key==="Escape"){e.preventDefault();closeAc();return;}
+      if(e.key==="Tab"){e.preventDefault();acceptAc(acActive>=0?acActive:0);return;}   // Tab = 추천 자동완성
+    }
+    if(e.key==="Enter"){
+      e.preventDefault();
+      const q=wordInput.value.trim(); if(!q) return;
+      if(VMAP[lc(q)]){ doAdd(q); return; }                     // 정확히 일치하는 단어는 그대로 담기
+      if(acOpen){ acceptAc(acActive>=0?acActive:0); return; }  // 부분 입력이면 추천 자동완성 사용
+      doAdd(q);                                                // 그 외엔 입력 그대로 담기
+    }
+  });
+  addWordBtn.addEventListener("click",()=>{ if(wordInput.value.trim()) doAdd(wordInput.value); else wordInput.focus(); });
+  document.addEventListener("click",e=>{ if(!e.target.closest(".add-row")) closeAc(); });
+
+  /* ---------- 도크 액션 ---------- */
+  $("#clearAll").addEventListener("click",()=>{ if(!compose.length)return; compose=[]; persistCompose(); buildVocab(); renderAll(); });
+  $("#savePreset").addEventListener("click",savePresetFromCompose);
+  $("#copyAll").addEventListener("click",()=>{
+    const text=compose.map(c=>c.en).join(", ");
+    if(!text){ toast("담긴 단어가 없어요"); return; }
+    const done=()=>toast("복사됨 · "+compose.length+"개");
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,fb); else fb();
+    function fb(){const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy");done();}catch(e){toast("복사 실패");}t.remove();}
+  });
+
+  /* ---------- 가져오기: 분리 ---------- */
+  let parsed=[];
+  splitBtn.addEventListener("click",splitImport);
+  async function splitImport(){
+    let src=importInput.value.trim();
+    if(!src){
+      if(!navigator.clipboard||!navigator.clipboard.readText){ toast("이 브라우저에선 클립보드를 못 읽어요 · 직접 붙여넣어 주세요"); return; }
+      try{ src=((await navigator.clipboard.readText())||"").trim(); }catch(e){ toast("클립보드를 읽지 못했어요 · 직접 붙여넣어 주세요"); return; }
+      if(src){ importInput.value=src; }
+      else{ toast("클립보드가 비어 있어요"); return; }
+    }
+    const segs=src.split(/[,.\n]+/).map(s=>s.trim()).filter(Boolean);
+    const seen=new Set(); parsed=[];
+    for(const s of segs){ const k=s.toLowerCase(); if(seen.has(k))continue; seen.add(k);
+      parsed.push({en:s, ko:translate(s), exists:!!VMAP[k], sel:false});
+    }
+    if(!parsed.length){ toast("분리할 내용이 없어요"); return; }
+    renderParsed();
+  }
+  function renderParsed(){
+    parsedWrap.hidden=false; tokensEl.innerHTML="";
+    parsed.forEach(p=>{
+      const t=document.createElement("button"); t.type="button";
+      t.className="tok"+(p.exists?" exists":"")+(p.sel?" sel":"");
+      t.innerHTML='<span class="en"></span><span class="ko '+(p.ko?'':'untr')+'"></span><span class="flag"></span>';
+      t.querySelector(".en").textContent=p.en;
+      t.querySelector(".ko").textContent=p.ko?("("+p.ko+")"):"(뜻 미등록)";
+      t.querySelector(".flag").textContent=p.sel?"선택됨":(p.exists?"단어장에 있음":"+ 선택");
+      t.addEventListener("click",()=>{ p.sel=!p.sel; renderParsed(); });
+      tokensEl.appendChild(t);
+    });
+    const selN=parsed.filter(p=>p.sel).length;
+    const newN=parsed.filter(p=>p.sel&&!p.exists).length;
+    composeNEl.textContent=selN?("("+selN+")"):"";
+    saveNEl.textContent=newN?("("+newN+")"):"";
+    saveLibBtn.disabled=!newN; toComposeBtn.disabled=!selN;
+    const anyUntrans=parsed.some(p=>!p.ko);
+    aiFillBtn.hidden=!(anyUntrans && (TRANSLATE_URL || (sb&&sb.functions)));
+  }
+  selectAllBtn.addEventListener("click",()=>{
+    const all=parsed.length&&parsed.every(p=>p.sel);
+    parsed.forEach(p=>p.sel=!all); renderParsed();
+  });
+  cancelBtn.addEventListener("click",()=>{ parsed=[]; parsedWrap.hidden=true; tokensEl.innerHTML=""; });
+  toComposeBtn.addEventListener("click",()=>{
+    const chosen=parsed.filter(p=>p.sel); if(!chosen.length){ toast("선택된 단어가 없어요"); return; }
+    let n=0; chosen.forEach(p=>{ if(addCompose(p.en)) n++; });
+    buildVocab(); renderAll();
+    switchTab("compose");
+    toast(n?("작성에 "+n+"개 담음"):"이미 담겨 있어요");
+  });
+  saveLibBtn.addEventListener("click",saveImportToLib);
+  async function saveImportToLib(){
+    const chosen=parsed.filter(p=>p.sel&&!p.exists);
+    if(!chosen.length){ toast("저장할 새 단어가 없어요"); return; }
+    const fresh=chosen.map(p=>({id:uid(),en:p.en,ko:p.ko||translate(p.en),cat:(CATOF[lc(p.en)]||guessCat(p.en)),count:0}));
+    userWords.push(...fresh); buildVocab(); renderAll();
+    chosen.forEach(p=>p.exists=true); renderParsed();
+    toast("단어장에 "+fresh.length+"개 저장");
+    if(sb){ try{ await sbInsert(fresh); }catch(e){ console.error(e); toast("클라우드 저장 실패 · 로컬엔 반영됨"); } }
+  }
+
+  /* ---------- AI 번역(가져오기 보조) ---------- */
+  const TRANSLATE_FN=(window.TRANSLATE_FN||"translate");
+  const TRANSLATE_URL=(window.TRANSLATE_URL||"");
+  const TRANSLATE_KEY=(window.TRANSLATE_KEY||"");
+  async function aiTranslate(words){
+    if(TRANSLATE_URL){
+      const res=await fetch(TRANSLATE_URL,{method:"POST",
+        headers:Object.assign({"content-type":"application/json"},TRANSLATE_KEY?{"authorization":"Bearer "+TRANSLATE_KEY,"apikey":TRANSLATE_KEY}:{}),
+        body:JSON.stringify({words})});
+      if(!res.ok) throw new Error("AI 번역 실패 "+res.status);
+      const data=await res.json(); return (data&&data.translations)||{};
+    }
+    if(!sb||!sb.functions) throw new Error("AI 번역 미설정");
+    const {data,error}=await sb.functions.invoke(TRANSLATE_FN,{body:{words}});
+    if(error) throw error; return (data&&data.translations)||{};
+  }
+  aiFillBtn.addEventListener("click",async()=>{
+    const targets=parsed.filter(p=>!p.ko);
+    if(!targets.length) return;
+    const prev=aiFillBtn.textContent; aiFillBtn.textContent="번역 중…"; aiFillBtn.disabled=true;
+    try{
+      const map=await aiTranslate(targets.map(p=>p.en));
+      const low={}; Object.keys(map).forEach(k=>low[k.toLowerCase()]=map[k]);
+      targets.forEach(p=>{ const ko=(map[p.en]||low[p.en.toLowerCase()]||"").trim(); if(ko)p.ko=ko; });
+      renderParsed();
+    }catch(e){ console.error(e); toast("AI 번역을 사용할 수 없어요"); }
+    finally{ aiFillBtn.textContent=prev; aiFillBtn.disabled=false; }
+  });
+
+  /* ---------- Supabase 헬퍼 ---------- */
+  async function sbList(){
+    const {data,error}=await sb.from("words").select("*");
+    if(error) throw error;
+    return data.map(d=>({id:d.id,en:d.en,ko:d.ko||"",cat:d.cat||"기타",count:d.count||0}));
+  }
+  async function sbInsert(rows){ if(!sb)return; const {error}=await sb.from("words").insert(rows.map(r=>({id:r.id,en:r.en,ko:r.ko,cat:r.cat,count:r.count}))); if(error) throw error; }
+  async function sbUpdate(id,patch){ if(!sb)return; const {error}=await sb.from("words").update(patch).eq("id",id); if(error) throw error; }
+
+  /* ---------- 탭 ---------- */
+  function switchTab(name){
+    document.querySelectorAll(".tab").forEach(t=>{const on=t.dataset.tab===name;t.classList.toggle("active",on);t.setAttribute("aria-selected",on?"true":"false");});
+    document.querySelectorAll(".view").forEach(v=>{const on=v.dataset.view===name;v.classList.toggle("show",on);v.hidden=!on;});
+    dock.hidden = name!=="compose";
+  }
+  document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+
+  /* ---------- 렌더 ---------- */
+  function renderAll(){ renderPresets(); renderChips(); renderLib(); renderDock(); }
+
+  /* ---------- 시작 ---------- */
+  (async function init(){
+    buildVocab(); renderAll();
+    if(!CONFIGURED){ setStatus(userWords.length?"demo":"local"); return; }
+    if(!sb){ setStatus("error"); return; }
+    try{ userWords=await sbList(); buildVocab(); renderAll(); setStatus("ok"); }
+    catch(e){ console.error(e); setStatus("error"); }
+  })();
+})();
+</script>
+<script>
+/* 테마 전환 (라이트 기본 · 선택 기억) */
+(function(){
+  "use strict";
+  var KEY="promptDrawer.theme", root=document.documentElement;
+  function read(){try{return localStorage.getItem(KEY);}catch(e){return null;}}
+  function write(v){try{localStorage.setItem(KEY,v);}catch(e){}}
+  function apply(theme){
+    if(theme==="dark"){ root.setAttribute("data-theme","dark"); } else { root.removeAttribute("data-theme"); }
+    var meta=document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute("content", theme==="dark" ? "#15161c" : "#ffffff");
+  }
+  var theme = read()==="dark" ? "dark" : "light";
+  apply(theme);
+  var toggle=document.getElementById("themeToggle");
+  if(toggle) toggle.addEventListener("click",function(){ theme = theme==="light" ? "dark" : "light"; apply(theme); write(theme); });
+})();
+</script>
+</body>
+</html>
