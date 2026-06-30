@@ -231,8 +231,9 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   .nav-item[data-mode="presets"]{display:none}
-  .app[data-mode="import"] .view-lib{display:none}.app[data-mode="import"] .view-import{display:block}
-  .app:not([data-mode="import"]) .view-lib{display:block}.app:not([data-mode="import"]) .view-import{display:none}
+  .app[data-mode="lib"] .view-lib{display:block}
+  .app[data-mode="import"] .view-import{display:block}
+  .app[data-mode="builder"] .view-builder{display:block}
 
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
   @media (max-width:859px){
@@ -247,6 +248,52 @@
     .main{padding:16px 14px 46px}
     .ez-body{gap:14px 22px}
   }
+
+  /* ============ 프롬프트 빌더 탭 ============ */
+  .bld-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .seg{display:inline-flex;gap:3px;background:var(--surface-2);border-radius:var(--r-pill);padding:3px}
+  .seg-b{appearance:none;border:0;background:none;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:650;padding:6px 16px;border-radius:var(--r-pill);cursor:pointer;transition:.12s}
+  .seg-b.on{background:var(--raised);color:var(--ink)}
+  .bld-hint{font-size:11.5px;color:var(--ink-faint)}
+  .grade{margin-left:auto;font-size:11px;font-weight:750;padding:4px 11px;border-radius:var(--r-pill)}
+  .grade.a{background:#e4f3ea;color:#1c7a4f}.grade.b{background:var(--amber-tint);color:var(--amber)}.grade.c{background:var(--surface-2);color:var(--ink-soft)}
+  .recipes{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+  .recipe{appearance:none;border:0;background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:inherit;font-size:12.5px;font-weight:650;cursor:pointer;text-align:left;transition:background .12s}
+  .recipe:hover{background:var(--hover)}
+  .recipe .rk{display:block;font-size:10px;color:var(--ink-faint);font-weight:500;margin-top:2px}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(296px,1fr));gap:12px;padding-bottom:8px}
+  .slot{background:var(--surface);border-radius:12px;padding:13px 15px}
+  .slot-h{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+  .slot-h .ord{font-size:10px;font-weight:700;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+  .slot-h .nm{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .slot-h .vv{margin-left:auto;font-size:10.5px;color:var(--accent);font-family:var(--mono);text-align:right;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bchips{display:flex;flex-wrap:wrap;gap:6px}
+  .bchip{appearance:none;border:0;background:var(--surface-2);color:var(--ink-soft);font:inherit;font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:var(--r-pill);cursor:pointer;transition:.12s}
+  .bchip:hover{background:var(--hover);color:var(--ink)}
+  .bchip[aria-pressed="true"]{background:var(--accent-tint-2);color:var(--ink);font-weight:650}
+  .shotgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .shotcard{appearance:none;border:0;background:var(--surface-2);color:var(--ink-soft);font:inherit;font-size:10.5px;font-weight:600;line-height:1.25;padding:9px 6px;border-radius:8px;cursor:pointer;text-align:center;transition:.12s}
+  .shotcard:hover{background:var(--hover);color:var(--ink)}
+  .shotcard[aria-pressed="true"]{background:var(--accent-tint-2);color:var(--ink)}
+  .binput{width:100%;background:var(--surface-2);border:0;border-radius:8px;color:var(--ink);font:inherit;font-size:12.5px;padding:8px 11px;outline:none}
+  .binput::placeholder{color:var(--ink-faint)}
+  .binput:focus{background:var(--surface);box-shadow:0 0 0 2px var(--accent-ring)}
+  .slot .slider-wrap{width:100%}
+  .bld-out{position:fixed;left:var(--side-w);right:0;bottom:0;z-index:50;background:var(--out);box-shadow:var(--sh-out);border-radius:16px 16px 0 0}
+  .bld-bar{display:flex;align-items:center;gap:9px;padding:12px 24px}
+  .bld-bar .t{font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--out-soft)}
+  .bld-bar .c{font-size:10px;color:var(--out-soft);font-variant-numeric:tabular-nums}
+  .bld-bar .bar-acts{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .bnext{appearance:none;border:0;background:var(--out-line);color:var(--out-tx);border-radius:6px;padding:7px 12px;font:inherit;font-size:11px;font-weight:600;cursor:pointer}
+  .bnext:hover{background:rgba(255,255,255,.16)}
+  .dcopy{appearance:none;border:0;border-radius:6px;padding:7px 15px;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;background:var(--accent);color:#fff}
+  .dcopy:hover{background:var(--accent-press)}
+  .bld-flow{font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--out-tx);padding:0 24px 8px;max-height:30vh;overflow:auto;word-break:break-word}
+  .bld-flow .ph{color:var(--out-soft)}
+  .bld-negline{font-family:var(--mono);font-size:12px;color:var(--neg);padding:0 24px 14px;word-break:break-word}
+  .bld-negline b{color:var(--out-soft);font-weight:600;letter-spacing:.06em}
+  .vid-only{display:none}
+  .view-builder.is-video .slot.vid-only{display:block}
 </style>
 </head>
 <body>
@@ -258,6 +305,7 @@
       </div>
       <nav class="nav" role="tablist">
         <button class="nav-item active" type="button" role="tab" data-mode="lib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>단어장</button>
+        <button class="nav-item" type="button" role="tab" data-mode="builder"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h10M4 19h6"/><path d="M16 14l2 2 4-4"/></svg>빌더</button>
         <button class="nav-item" type="button" role="tab" data-mode="presets"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>프리셋</button>
         <button class="nav-item" type="button" role="tab" data-mode="import"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>가져오기</button>
       </nav>
@@ -275,7 +323,7 @@
 
     <main class="main">
       <!-- 단어장 -->
-      <section class="view view-lib show">
+      <section class="view view-lib">
         <details class="ez" id="ezPanel">
           <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>쉬운 추가 <span class="ez-hint">성별·나이·샷·렌즈·카메라 높이를 슬라이더로 — 각 조작이 정확한 묘사 여러 개를 함께 담음</span></summary>
           <div class="ez-body">
@@ -361,6 +409,32 @@
               <div class="negflow" id="negTokens"></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- 프롬프트 빌더 -->
+      <section class="view view-builder">
+        <div class="bld-head">
+          <div class="seg" id="bldMode">
+            <button type="button" class="seg-b on" data-m="image">이미지</button>
+            <button type="button" class="seg-b" data-m="video">영상</button>
+          </div>
+          <span class="bld-hint">슬롯을 채우면 가이드 권장 순서로 자동 조립 · 아래 추천 프리셋으로 한 번에 A급 시작</span>
+          <span class="grade" id="bldGrade"></span>
+        </div>
+        <div class="recipes" id="bldRecipes"></div>
+        <div class="slots" id="bldSlots"></div>
+        <!-- 완성 프롬프트(하단 고정) -->
+        <div class="bld-out" id="bldOut">
+          <div class="bld-bar">
+            <span class="t">완성 프롬프트</span><span class="c" id="bldCount"></span>
+            <span class="bar-acts">
+              <button class="bnext" id="bldNext" type="button" hidden>부족한 슬롯 채우기</button>
+              <button class="dcopy" id="bldCopy" type="button">복사</button>
+            </span>
+          </div>
+          <div class="bld-flow" id="bldFlow"></div>
+          <div class="bld-negline" id="bldNegLine" hidden></div>
         </div>
       </section>
 
@@ -850,10 +924,132 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   async function sbUpdate(id,patch){if(!sb)return;const{error}=await sb.from("words").update(patch).eq("id",id);if(error)throw error;}
 
   function setMode(name){mode=name;appEl.setAttribute("data-mode",name);
-    document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.mode===name));if(name!=="lib")closeAc();}
+    document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.mode===name));if(name!=="lib")closeAc();
+    if(name==="builder")renderBuilder();}
   document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
 
   function renderAll(){renderPresets();renderChips();renderLib();renderDock();}
+
+  /* ── 프롬프트 빌더 — 가이드 권장 순서로 자동 조립(이미지/영상 모드) ── */
+  const bldEl=$(".view-builder"),bldSlots=$("#bldSlots"),bldRecipes=$("#bldRecipes"),bldFlow=$("#bldFlow"),bldNegLine=$("#bldNegLine"),bldCount=$("#bldCount"),bldGrade=$("#bldGrade"),bldNext=$("#bldNext");
+  let bMode="image",bgender=null,bage=0,bshotIdx=0,bangIdx=0,blensIdx=0,bstyle=0,bdepth=0;
+  const BS={subject:[],appearance:[],scene:[],camMove:[],shot:[],angle:[],lens:[],depth:[],lighting:[],color:[],style:[],mood:[],pacing:[],quality:[],aspect:[],neg:[]};
+  const bel=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+  const tokList=o=>[{en:o.en,ko:o.ko}].concat((o.c||[]).map(x=>({en:x,ko:""})));
+  const koList=a=>a.filter(t=>t.ko).map(t=>t.ko).join(", ");
+  const B_STYLE=[null,{en:"photorealistic",ko:"실사",c:["lifelike detail","natural texture"]},{en:"editorial photography",ko:"에디토리얼",c:["polished","magazine-quality"]},{en:"digital illustration",ko:"일러스트",c:["clean linework","stylized"]},{en:"concept art",ko:"컨셉아트",c:["painterly","cinematic design"]},{en:"anime style",ko:"애니",c:["cel shading","expressive"]}];
+  const B_DEPTH=[null,{en:"deep focus",ko:"깊은 심도",c:["everything sharp","large depth of field"]},{en:"moderate depth of field",ko:"중간 심도"},{en:"shallow depth of field",ko:"얕은 심도",c:["soft background"]},{en:"creamy bokeh",ko:"보케",c:["beautiful background blur","subject isolation"]}];
+  const B_LIGHTS=[{en:"soft diffuse light",ko:"부드러운 확산광",c:["even illumination","gentle shadows"]},{en:"golden hour",ko:"골든아워",c:["warm low sun","long shadows"]},{en:"blue hour",ko:"블루아워",c:["cool dusk","deep blue sky"]},{en:"hard studio flash",ko:"하드 스튜디오",c:["sharp directional light","crisp shadows"]},{en:"Rembrandt lighting",ko:"렘브란트",c:["dramatic side key","moody portrait"]},{en:"rim backlight",ko:"림/역광",c:["glowing edge light","silhouette separation"]},{en:"neon glow",ko:"네온",c:["colored neon signs","urban night"]},{en:"candlelight",ko:"촛불",c:["warm flickering glow","intimate"]},{en:"window natural light",ko:"자연 창광",c:["soft daylight","airy"]},{en:"god rays",ko:"빛줄기",c:["volumetric light beams","atmospheric"]}];
+  const B_COLORS=[{en:"warm color palette",ko:"따뜻한 톤"},{en:"cool color palette",ko:"차가운 톤"},{en:"muted desaturated palette",ko:"차분한 색"},{en:"vibrant saturated colors",ko:"선명한 색"},{en:"pastel palette",ko:"파스텔"},{en:"monochrome",ko:"흑백"},{en:"teal and orange grade",ko:"틸&오렌지"},{en:"earthy natural tones",ko:"어스 톤"}];
+  const B_MOODS=[{en:"serene and calm",ko:"고요"},{en:"dramatic and tense",ko:"극적"},{en:"mysterious",ko:"신비"},{en:"romantic",ko:"로맨틱"},{en:"energetic",ko:"활기"},{en:"melancholic",ko:"쓸쓸"},{en:"epic and grand",ko:"웅장"},{en:"dreamy ethereal",ko:"몽환"},{en:"nostalgic",ko:"향수"},{en:"cozy intimate",ko:"아늑"}];
+  const B_CAMMOVE=[{en:"slow push-in",ko:"슬로우 푸시인",c:["gentle dolly forward","building intimacy"]},{en:"dolly out",ko:"달리 아웃",c:["pulling back","revealing context"]},{en:"tracking shot",ko:"트래킹",c:["following the subject","smooth lateral move"]},{en:"pan",ko:"팬(좌우)",c:["horizontal rotation"]},{en:"tilt",ko:"틸트(상하)",c:["vertical rotation"]},{en:"crane shot",ko:"크레인",c:["sweeping vertical arc","cinematic reveal"]},{en:"orbital shot",ko:"오비탈",c:["circling around the subject","360 reveal"]},{en:"handheld",ko:"핸드헬드",c:["organic shake","documentary feel"]},{en:"drone shot",ko:"드론",c:["aerial sweep","high altitude"]},{en:"static shot",ko:"고정",c:["locked-off camera","stable frame"]}];
+  const B_PACING=[{en:"slowly",ko:"천천히"},{en:"gently",ko:"부드럽게"},{en:"steadily",ko:"일정하게"},{en:"briskly",ko:"경쾌하게"},{en:"energetically",ko:"역동적으로"}];
+  const B_ASPECT=[{en:"16:9 cinematic aspect ratio",ko:"16:9"},{en:"9:16 vertical aspect ratio",ko:"9:16 세로"},{en:"1:1 square aspect ratio",ko:"1:1"},{en:"2.39:1 anamorphic widescreen",ko:"2.39:1"}];
+  const B_QUAL={en:"ultra-detailed",ko:"고품질",c:["sharp focus","high fidelity","professionally color graded"]};
+  const B_NEG=[{en:"blurry",ko:"흐릿함"},{en:"low quality",ko:"저화질"},{en:"deformed",ko:"기형"},{en:"bad hands",ko:"손 이상"},{en:"extra fingers",ko:"손가락 이상"},{en:"watermark",ko:"워터마크"},{en:"text",ko:"글자"},{en:"oversaturated",ko:"과채도"}];
+  const B_RECIPES=[
+    {label:"시네마틱",rk:"영화 같은 인물",img:1,set:{lighting:["cinematic lighting","dramatic side key"],style:4,color:["teal and orange grade"],lens:5,mood:["dramatic and tense"],quality:1}},
+    {label:"인물 포트레이트",rk:"보케 살린 인물",img:1,set:{shot:2,lens:5,depth:4,lighting:["window natural light","soft diffuse light"],styleName:"editorial photography"}},
+    {label:"제품 사진",rk:"깔끔한 스튜디오",img:1,set:{shot:2,lighting:["hard studio flash"],color:["muted desaturated palette"],style:1,scene:["clean studio background"],quality:1}},
+    {label:"네온 나이트",rk:"도시 야경 무드",img:1,set:{lighting:["neon glow"],color:["teal and orange grade"],mood:["mysterious"],scene:["rainy city street at night"],style:4}},
+    {label:"지브리풍",rk:"몽환 애니",img:1,set:{style:5,lighting:["soft diffuse light"],color:["pastel palette"],mood:["dreamy ethereal"],scene:["lush green meadow"]}},
+    {label:"다큐(영상)",rk:"핸드헬드 자연광",img:0,set:{lighting:["window natural light"],style:1,mood:["nostalgic"],camMove:["handheld"],color:["earthy natural tones"]}}
+  ];
+  const AGE_MAX=AGE.length-1, CAMH_MAX=CAMH.length-1, LENS_MAX=LENS.length-1, SHOT_MAX=SHOT.length-1;
+
+  function subjTokens(){const toks=[];
+    if(bage>0){const a=AGE[bage];const col=bgender==="man"?"m":bgender==="woman"?"w":"n";
+      toks.push({en:a[col],ko:a.ko+" "+GKO[bgender||"none"]});a.d.forEach(x=>toks.push({en:x,ko:""}));}
+    else if(bgender){toks.push({en:bgender==="man"?"man":"woman",ko:GKO[bgender]});}
+    return toks;}
+  function deriveBS(){BS.subject=subjTokens();
+    BS.shot=bshotIdx?tokList(SHOT[bshotIdx]):[];BS.angle=bangIdx?tokList(CAMH[bangIdx]):[];
+    BS.lens=blensIdx?tokList(LENS[blensIdx]):[];BS.style=bstyle?tokList(B_STYLE[bstyle]):[];BS.depth=bdepth?tokList(B_DEPTH[bdepth]):[];}
+  function applyRecipe(r){const s=r.set;
+    if(s.styleName){const i=B_STYLE.findIndex(x=>x&&x.en===s.styleName);if(i>0)bstyle=i;} if(s.style)bstyle=s.style;
+    if(s.shot)bshotIdx=s.shot; if(s.lens)blensIdx=s.lens; if(s.depth)bdepth=s.depth;
+    ["lighting","color","mood","scene","camMove","pacing","appearance"].forEach(k=>{if(s[k])BS[k]=s[k].map(e=>({en:e,ko:vocabKo(e)}));});
+    if(s.quality)BS.quality=tokList(B_QUAL);
+    renderBuilder();}
+
+  function bChips(slot,opts,multi){const box=bel("div","bchips");
+    opts.forEach(o=>{const b=bel("button","bchip");b.type="button";b.textContent=o.ko;const on=BS[slot].some(t=>t.en===o.en);b.setAttribute("aria-pressed",on?"true":"false");
+      b.onclick=()=>{ if(multi){ if(on){const rm=new Set([o.en].concat(o.c||[]));BS[slot]=BS[slot].filter(t=>!rm.has(t.en));}else{BS[slot]=BS[slot].concat(tokList(o));} } else { BS[slot]=on?[]:tokList(o); } renderBuilder(); };
+      box.appendChild(b);}); return box;}
+  function bText(slot,ph){const box=bel("div");const inp=bel("input","binput");inp.type="text";inp.placeholder=ph;
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const v=inp.value.trim();if(!v)return;
+      v.split(/[,\n]+/).map(x=>x.trim()).filter(Boolean).forEach(p=>{const en=resolveToken(p);if(!BS[slot].some(t=>t.en===en))BS[slot].push({en,ko:vocabKo(en)});});inp.value="";renderBuilder();}});
+    box.appendChild(inp);
+    if(BS[slot].length){const ch=bel("div","bchips");ch.style.marginTop="8px";
+      BS[slot].forEach(t=>{const b=bel("button","bchip");b.type="button";b.setAttribute("aria-pressed","true");b.textContent=t.ko?(t.en+" · "+t.ko):t.en;b.onclick=()=>{BS[slot]=BS[slot].filter(x=>x.en!==t.en);renderBuilder();};ch.appendChild(b);});
+      box.appendChild(ch);}
+    return box;}
+  function bShot(){const g=bel("div","shotgrid");
+    SHOT.forEach((o,i)=>{if(i===0)return;const b=bel("button","shotcard");b.type="button";b.textContent=o.ko;b.setAttribute("aria-pressed",bshotIdx===i?"true":"false");
+      b.onclick=()=>{bshotIdx=(bshotIdx===i?0:i);renderBuilder();};g.appendChild(b);});return g;}
+  function bSubject(){const box=bel("div");const gp=bel("div","gpick");
+    [["man","남자"],["woman","여자"]].forEach(([g,ko])=>{const b=bel("button","gbtn");b.type="button";b.textContent=ko;b.setAttribute("aria-pressed",bgender===g?"true":"false");b.onclick=()=>{bgender=(bgender===g?null:g);renderBuilder();};gp.appendChild(b);});
+    box.appendChild(gp);
+    const w=bel("div","slider-wrap");w.style.marginTop="10px";const inp=bel("input");inp.type="range";inp.min=0;inp.max=AGE_MAX;inp.step=1;inp.value=bage;
+    const sc=bel("div","scale");sc.innerHTML='<span>나이 없음</span><span>고령</span>';
+    inp.addEventListener("input",()=>{bage=+inp.value;deriveBS();vvSet(box,bage?AGE[bage].ko:"");renderBldOut();});
+    w.appendChild(inp);w.appendChild(sc);box.appendChild(w);return box;}
+  function bSlider(slot,DATA,getV,setV,leftKo,rightKo){const w=bel("div","slider-wrap");const inp=bel("input");inp.type="range";inp.min=0;inp.max=DATA.length-1;inp.step=1;inp.value=getV();
+    const sc=bel("div","scale");sc.innerHTML='<span>'+leftKo+'</span><span>'+rightKo+'</span>';
+    inp.addEventListener("input",()=>{setV(+inp.value);deriveBS();vvSet(inp,DATA[+inp.value]?DATA[+inp.value].ko:"");renderBldOut();});
+    w.appendChild(inp);w.appendChild(sc);return w;}
+  function vvSet(node,txt){const slot=node.closest&&node.closest(".slot");if(slot){const vv=slot.querySelector(".vv");if(vv)vv.textContent=txt;}}
+
+  function addSlot(ord,name,vidOnly,ctrl,vvText){const s=bel("div","slot"+(vidOnly?" vid-only":""));const h=bel("div","slot-h");
+    h.innerHTML='<span class="ord">'+ord+'</span><span class="nm">'+name+'</span><span class="vv"></span>';
+    h.querySelector(".vv").textContent=vvText||"";s.appendChild(h);s.appendChild(ctrl);bldSlots.appendChild(s);}
+
+  function renderBuilder(){if(!bldEl)return;deriveBS();
+    bldEl.classList.toggle("is-video",bMode==="video");
+    document.querySelectorAll("#bldMode .seg-b").forEach(b=>b.classList.toggle("on",b.dataset.m===bMode));
+    bldRecipes.innerHTML="";B_RECIPES.forEach(r=>{const b=bel("button","recipe");b.type="button";b.innerHTML=r.label+'<span class="rk">'+r.rk+'</span>';b.onclick=()=>applyRecipe(r);bldRecipes.appendChild(b);});
+    bldSlots.innerHTML="";let n=0;const ord=()=>("0"+(++n)).slice(-2);
+    addSlot(ord(),"주제 · 인물",false,bSubject(),(bage?AGE[bage].ko:"")+(bgender?(" "+(bgender==="man"?"남":"여")):""));
+    addSlot(ord(),"외형 · 디테일",false,bText("appearance","머리·의상·표정 등 입력 후 Enter (한글 가능)"),koList(BS.appearance));
+    addSlot(ord(),"장면 · 배경",false,bText("scene","장소·시간·날씨 등 입력 후 Enter"),koList(BS.scene));
+    addSlot(ord(),"카메라 무빙",true,bChips("camMove",B_CAMMOVE,false),koList(BS.camMove));
+    addSlot(ord(),"샷 크기",false,bShot(),bshotIdx?SHOT[bshotIdx].ko:"");
+    addSlot(ord(),"카메라 높이",false,bSlider("angle",CAMH,()=>bangIdx,v=>bangIdx=v,"초저각","극항공"),bangIdx?CAMH[bangIdx].ko:"");
+    addSlot(ord(),"렌즈",false,bSlider("lens",LENS,()=>blensIdx,v=>blensIdx=v,"어안","초망원"),blensIdx?LENS[blensIdx].ko:"");
+    addSlot(ord(),"심도 · 보케",false,bSlider("depth",B_DEPTH,()=>bdepth,v=>bdepth=v,"깊은","보케"),bdepth?B_DEPTH[bdepth].ko:"");
+    addSlot(ord(),"조명",false,bChips("lighting",B_LIGHTS,true),koList(BS.lighting));
+    addSlot(ord(),"색 · 팔레트",false,bChips("color",B_COLORS,true),koList(BS.color));
+    if(bMode==="image")addSlot(ord(),"스타일 (실사↔양식)",false,bSlider("style",B_STYLE,()=>bstyle,v=>bstyle=v,"실사","애니"),bstyle?B_STYLE[bstyle].ko:"");
+    addSlot(ord(),"분위기",false,bChips("mood",B_MOODS,true),koList(BS.mood));
+    addSlot(ord(),"페이싱",true,bChips("pacing",B_PACING,false),koList(BS.pacing));
+    addSlot(ord(),"화면비",false,bChips("aspect",B_ASPECT,false),koList(BS.aspect));
+    {const qs=bel("div");const qc=bel("div","bchips");const qb=bel("button","bchip");qb.type="button";qb.textContent="고품질 토큰 추가";const qon=BS.quality.length>0;qb.setAttribute("aria-pressed",qon?"true":"false");qb.onclick=()=>{BS.quality=qon?[]:tokList(B_QUAL);renderBuilder();};qc.appendChild(qb);qs.appendChild(qc);addSlot(ord(),"품질",false,qs,koList(BS.quality)+(BS.quality.length?"":""));}
+    {const ns=bel("div");ns.appendChild(bChips("neg",B_NEG,true));ns.appendChild(bText("neg","제외할 것 입력 후 Enter"));addSlot(ord(),"제외 · 네거티브",false,ns,koList(BS.neg));}
+    renderBldOut();}
+
+  function assemble(){const order=bMode==="video"
+      ?["subject","appearance","scene","camMove","shot","angle","lens","depth","lighting","color","mood","pacing","quality","aspect"]
+      :["subject","appearance","scene","shot","angle","lens","depth","lighting","color","style","mood","quality","aspect"];
+    let toks=[];const seen=new Set();
+    order.forEach(k=>BS[k].forEach(t=>{const key=t.en.toLowerCase();if(!seen.has(key)){seen.add(key);toks.push(t);}}));
+    if(bMode==="video"&&BS.camMove.length)toks.push({en:"then settles back into place",ko:""});
+    return toks;}
+  function renderBldOut(){const toks=assemble();
+    bldFlow.innerHTML="";if(!toks.length){const p=bel("span","ph");p.textContent="슬롯을 채우면 가이드 권장 순서로 완성 프롬프트가 만들어집니다.";bldFlow.appendChild(p);}
+    else bldFlow.textContent=toks.map(t=>t.en).join(", ");
+    bldCount.textContent=toks.length?toks.length+"개":"";
+    if(BS.neg.length){bldNegLine.hidden=false;bldNegLine.innerHTML='<b>NEGATIVE</b> '+BS.neg.map(t=>t.en).join(", ");}else bldNegLine.hidden=true;
+    const has=k=>BS[k].length>0;const cam=has("shot")||has("angle")||has("lens");
+    const score=[has("subject"),cam,has("lighting")].filter(Boolean).length;
+    const g=score>=3?"a":score>=2?"b":"c";bldGrade.className="grade "+g;bldGrade.textContent=(g==="a"?"A · 충분":g==="b"?"B · 거의":"C · 보강 필요");
+    if(bldNext){bldNext.hidden=score>=3;}}
+  document.querySelectorAll("#bldMode .seg-b").forEach(b=>b.addEventListener("click",()=>{bMode=b.dataset.m;renderBuilder();}));
+  $("#bldCopy").addEventListener("click",()=>{const toks=assemble();let text=toks.map(t=>t.en).join(", ");if(BS.neg.length)text+=(text?"\n":"")+"Negative prompt: "+BS.neg.map(t=>t.en).join(", ");
+    if(!text){toast("아직 채운 슬롯이 없어요");return;}const done=()=>toast("복사됨 · "+toks.length+"개"+(BS.neg.length?" · 제외 "+BS.neg.length:""));
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,fb);else fb();
+    function fb(){const t=bel("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy");done();}catch(e){toast("복사 실패");}t.remove();}});
+  if(bldNext)bldNext.addEventListener("click",()=>{const has=k=>BS[k].length>0;const want=!has("subject")?"주제":(!(has("shot")||has("angle")||has("lens"))?"샷":(!has("lighting")?"조명":null));
+    if(!want)return;const nm=[...bldSlots.querySelectorAll(".slot .nm")].find(x=>x.textContent.indexOf(want)===0);if(nm)nm.closest(".slot").scrollIntoView({block:"center"});});
 
   (async function init(){
     buildVocab();setMode("lib");renderAll();
