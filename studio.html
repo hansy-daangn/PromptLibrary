@@ -157,12 +157,14 @@
   .tray-toolbar button{appearance:none;border:0;border-radius:6px;padding:7px 13px;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;transition:.13s}
   .dsave{background:var(--out-line);color:var(--out-tx)}.dsave:hover{background:rgba(255,255,255,.16)}
   .dclear{background:none;color:var(--out-soft)}.dclear:hover{color:var(--out-tx)}
-  .flow{font-family:var(--mono);font-size:13px;line-height:1.95;color:var(--out-tx);word-break:break-word}
-  .fw{cursor:pointer;border-radius:5px;padding:2px 4px;transition:background .1s;white-space:nowrap}
-  .fw:hover{background:var(--out-line)}
+  .flow{display:flex;flex-wrap:wrap;gap:7px}
+  .fw{display:inline-flex;flex-direction:column;align-items:flex-start;gap:5px;cursor:pointer;border-radius:8px;padding:7px 10px;background:var(--out-line);transition:background .12s}
+  .fw:hover{background:rgba(255,255,255,.14)}
+  .fw .fwtop{display:flex;align-items:baseline;gap:2px;font-family:var(--mono);font-size:12.5px}
   .fw .fwt{color:var(--out-tx)}
   .fw .fwn{color:var(--out-accent);font-size:10px;font-weight:700}
-  .fw:not(:last-child)::after{content:",\00a0";color:var(--out-soft)}
+  .fw .fwk{font-size:10px;color:var(--out-soft);line-height:1}
+  .fw .fwk:empty{display:none}
   /* 제외(네거티브) */
   .neg{margin-top:11px;background:var(--out-2);border-radius:var(--r-sm);padding:9px 11px}
   .neg-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
@@ -527,8 +529,8 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     dockTokens.innerHTML="";
     compose.forEach(c=>{const w=document.createElement("span");w.className="fw";w.tabIndex=0;
       const ko=vocabKo(c.en)||c.ko;w.title=(ko?ko+" · ":"")+"클릭하면 가중치·삭제";
-      w.innerHTML='<span class="fwt"></span><span class="fwn"></span>';
-      w.querySelector(".fwt").textContent=c.en;w.querySelector(".fwn").textContent=wstr(c.w);
+      w.innerHTML='<span class="fwtop"><span class="fwt"></span><span class="fwn"></span></span><span class="fwk"></span>';
+      w.querySelector(".fwt").textContent=c.en;w.querySelector(".fwn").textContent=wstr(c.w);w.querySelector(".fwk").textContent=ko||"";
       w.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openWeight(c,w);});
       w.addEventListener("keydown",e=>{if(e.key==="Backspace"||e.key==="Delete"){e.preventDefault();removeCompose(c.en);buildVocab();renderAll();}else if(e.key==="Enter"||e.key===" "){e.preventDefault();openWeight(c,w);}});
       dockTokens.appendChild(w);});
