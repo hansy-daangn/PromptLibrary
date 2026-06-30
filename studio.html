@@ -107,6 +107,10 @@
   .ticks{display:flex;justify-content:space-between;padding:0 6px;margin-top:5px}
   .ticks i{width:2px;height:5px;border-radius:1px;background:var(--track)}
   .scale{display:flex;justify-content:space-between;font-size:9px;color:var(--ink-faint);margin-top:3px}
+  .gpick{display:flex;gap:6px}
+  .gbtn{appearance:none;border:0;background:var(--surface-2);color:var(--ink-soft);font:inherit;font-size:12px;font-weight:600;padding:7px 16px;border-radius:var(--r-pill);cursor:pointer;transition:.12s}
+  .gbtn:hover{background:var(--hover);color:var(--ink)}
+  .gbtn[aria-pressed="true"]{background:var(--accent-tint-2);color:var(--ink);font-weight:650}
 
   /* 입력 — 필드는 필드답게(채운 회색, 무테두리, 포커스 시에만 링) */
   .add-row{display:flex;gap:6px;align-items:center;background:var(--surface-2);border-radius:var(--r-sm);padding:5px 5px 5px 6px;position:relative;transition:box-shadow .14s,background .14s}
@@ -273,38 +277,45 @@
       <!-- 단어장 -->
       <section class="view view-lib show">
         <details class="ez" id="ezPanel">
-          <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>쉬운 추가 <span class="ez-hint">슬라이더로 나이·샷·렌즈·앵글을 바로 담기</span></summary>
+          <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>쉬운 추가 <span class="ez-hint">성별·나이·샷·렌즈·카메라 높이를 슬라이더로 — 각 조작이 정확한 묘사 여러 개를 함께 담음</span></summary>
           <div class="ez-body">
+            <div class="ez-ctrl">
+              <div class="lab">성별 <span class="val" id="genLabel">지정 안 함</span></div>
+              <div class="gpick">
+                <button type="button" class="gbtn" data-g="man" aria-pressed="false">남자</button>
+                <button type="button" class="gbtn" data-g="woman" aria-pressed="false">여자</button>
+              </div>
+            </div>
             <div class="ez-ctrl">
               <div class="lab">나이 <span class="val" id="ageLabel">지정 안 함</span></div>
               <div class="slider-wrap">
-                <input type="range" id="ageRange" min="0" max="8" step="1" value="0" aria-label="인물 나이">
-                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                <div class="scale"><span>아기</span><span>노년</span></div>
+                <input type="range" id="ageRange" min="0" max="9" step="1" value="0" aria-label="나이">
+                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="scale"><span>아기</span><span>고령</span></div>
               </div>
             </div>
             <div class="ez-ctrl">
               <div class="lab">샷 크기 <span class="val" id="shotLabel">지정 안 함</span></div>
               <div class="slider-wrap">
-                <input type="range" id="shotRange" min="0" max="5" step="1" value="0" aria-label="샷 크기">
-                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                <div class="scale"><span>클로즈업</span><span>와이드</span></div>
+                <input type="range" id="shotRange" min="0" max="8" step="1" value="0" aria-label="샷 크기">
+                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="scale"><span>익스트림 클로즈업</span><span>설정 샷</span></div>
               </div>
             </div>
             <div class="ez-ctrl">
               <div class="lab">렌즈 초점거리 <span class="val" id="lensLabel">지정 안 함</span></div>
               <div class="slider-wrap">
-                <input type="range" id="lensRange" min="0" max="6" step="1" value="0" aria-label="렌즈 초점거리">
-                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                <div class="scale"><span>광각 16mm</span><span>망원 135mm</span></div>
+                <input type="range" id="lensRange" min="0" max="7" step="1" value="0" aria-label="렌즈 초점거리">
+                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="scale"><span>어안</span><span>초망원</span></div>
               </div>
             </div>
             <div class="ez-ctrl">
-              <div class="lab">카메라 높이(앵글) <span class="val" id="angLabel">눈높이(기본)</span></div>
+              <div class="lab">카메라 높이 <span class="val" id="camhLabel">지정 안 함</span></div>
               <div class="slider-wrap">
-                <input type="range" id="angRange" min="0" max="4" step="1" value="2" aria-label="카메라 높이">
-                <div class="ticks"><i></i><i></i><i></i><i></i><i></i></div>
-                <div class="scale"><span>아래에서</span><span>위에서</span></div>
+                <input type="range" id="camhRange" min="0" max="11" step="1" value="0" aria-label="카메라 높이">
+                <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="scale"><span>초저각(벌레 시점)</span><span>극항공</span></div>
               </div>
             </div>
           </div>
@@ -472,7 +483,8 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
   const saveNEl=$("#saveN"),composeNEl=$("#composeN"),aiFillBtn=$("#aiFill");
   const statusEl=$("#status"),cloudEl=$("#cloud"),cloudTxt=$("#cloudTxt"),toastEl=$("#toast");
   const ageRange=$("#ageRange"),ageLabel=$("#ageLabel"),shotRange=$("#shotRange"),shotLabel=$("#shotLabel");
-  const lensRange=$("#lensRange"),lensLabel=$("#lensLabel"),angRange=$("#angRange"),angLabel=$("#angLabel");
+  const lensRange=$("#lensRange"),lensLabel=$("#lensLabel"),camhRange=$("#camhRange"),camhLabel=$("#camhLabel"),genLabel=$("#genLabel");
+  const gbtns=[...document.querySelectorAll(".gbtn")];
   const negBox=$("#negBox"),negInput=$("#negInput"),negTokens=$("#negTokens");
   let toastTimer; function toast(m){toastEl.textContent=m;toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1500);}
 
@@ -515,8 +527,8 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     return t;}
 
   function composeHas(en){const k=lc(en);return compose.some(c=>lc(c.en)===k);}
-  function addCompose(en){en=String(en||"").trim();if(!en)return false;if(composeHas(en))return false;
-    compose.push({en,ko:vocabKo(en)});const k=lc(en);usage[k]=(usage[k]||0)+1;store.set(K_USAGE,JSON.stringify(usage));
+  function addCompose(en,ko){en=String(en||"").trim();if(!en)return false;if(composeHas(en))return false;
+    compose.push({en,ko:(ko!=null&&ko!=="")?ko:vocabKo(en)});const k=lc(en);usage[k]=(usage[k]||0)+1;store.set(K_USAGE,JSON.stringify(usage));
     const v=VMAP[k];if(v&&v.id&&sb){v.cnt=(v.cnt||0)+1;const uw=userWords.find(w=>lc(w.en)===k);if(uw)uw.count=v.cnt;sbUpdate(v.id,{count:v.cnt}).catch(()=>{});}
     persistCompose();return true;}
   function removeCompose(en){const k=lc(en);const i=compose.findIndex(c=>lc(c.en)===k);if(i>=0){compose.splice(i,1);persistCompose();return true;}return false;}
@@ -712,37 +724,86 @@ const BUILTIN_PRESETS=[{"id":"snapshot","label":"스냅샷 세트","desc":"자�
     if(n)toast(n>1?("제외 "+n+"개"):"제외 · "+parts[0]);else toast("이미 제외에 있어요");}
   negInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();commitNeg();}});
 
-  /* ── #6 쉬운 추가 컨트롤(눈금 슬라이더 + 스냅 그리드) ── */
-  const AGES=[null,"baby","toddler","child","teenager","young adult","adult","middle-aged person","elderly person"];
-  const AGES_KO=["지정 안 함","아기","유아","아이","십 대","청년","성인","중년","노년"];
-  function setAge(){const i=+ageRange.value;ageLabel.textContent=AGES_KO[i];
-    if(lastAge){removeCompose(lastAge);lastAge=null;} if(AGES[i]){addCompose(AGES[i]);lastAge=AGES[i];} buildVocab();renderAll();}
-  ageRange.addEventListener("input",setAge);
+  /* ── #2,#3 쉬운 추가 — 각 컨트롤이 정확한 묘사 2~4개를 함께 담음(프롬프트 가이드 기반) ── */
+  // 컨트롤별로 현재 담은 토큰 묶음을 추적해, 조작 시 이전 묶음을 빼고 새 묶음을 담음
+  const CTRL={subj:[],shot:[],lens:[],camh:[]};
+  function swapSet(key,toks){ (CTRL[key]||[]).forEach(removeCompose); CTRL[key]=[];
+    (toks||[]).forEach(t=>{addCompose(t.en,t.ko);CTRL[key].push(t.en);}); buildVocab();renderAll(); }
+  function setStep(range,label,DATA,key){const i=+range.value;const d=DATA[i];
+    label.textContent=d?d.ko:"지정 안 함";
+    swapSet(key, d?[{en:d.en,ko:d.ko}].concat((d.c||[]).map(x=>({en:x,ko:""}))):[]); }
 
-  const SHOTS=[null,"extreme close-up","close-up","medium shot","full body shot","wide shot"];
-  const SHOTS_KO=["지정 안 함","익스트림 클로즈업","클로즈업","미디엄 샷","전신","와이드 샷"];
-  let lastShot=null;
-  function setShot(){const i=+shotRange.value;shotLabel.textContent=SHOTS_KO[i];
-    if(lastShot){removeCompose(lastShot);lastShot=null;} if(SHOTS[i]){addCompose(SHOTS[i]);lastShot=SHOTS[i];} buildVocab();renderAll();}
-  shotRange.addEventListener("input",setShot);
+  // 나이 × 성별 → 하나의 일관된 주어 구절 + 묘사 (서로 충돌 없이 결합)
+  let gender=null,ageIdx=0;
+  const GKO={man:"남성",woman:"여성",none:"인물"};
+  const AGE=[null,
+    {ko:"아기",m:"baby boy",w:"baby girl",n:"baby",d:["chubby cheeks","wide curious eyes"]},
+    {ko:"유아",m:"toddler boy",w:"toddler girl",n:"toddler",d:["small","playful expression"]},
+    {ko:"어린이",m:"young boy",w:"young girl",n:"child",d:["bright-eyed","energetic"]},
+    {ko:"청소년",m:"teenage boy",w:"teenage girl",n:"teenager",d:["youthful","fresh-faced"]},
+    {ko:"청년",m:"young man",w:"young woman",n:"young adult",d:["in their twenties","smooth skin"]},
+    {ko:"성인",m:"man",w:"woman",n:"person",d:["in their thirties","confident expression"]},
+    {ko:"중년",m:"middle-aged man",w:"middle-aged woman",n:"middle-aged person",d:["mature","faint smile lines"]},
+    {ko:"노년",m:"elderly man",w:"elderly woman",n:"elderly person",d:["silver hair","gentle eyes"]},
+    {ko:"고령",m:"very old man",w:"very old woman",n:"very elderly person",d:["deeply wrinkled","wise expression"]}
+  ];
+  function updateSubject(){const toks=[];
+    if(ageIdx>0){const a=AGE[ageIdx];const col=gender==="man"?"m":gender==="woman"?"w":"n";
+      toks.push({en:a[col],ko:a.ko+" "+GKO[gender||"none"]});
+      a.d.forEach(x=>toks.push({en:x,ko:""}));}
+    else if(gender){toks.push({en:gender==="man"?"man":"woman",ko:GKO[gender]});}
+    swapSet("subj",toks);
+    ageLabel.textContent=ageIdx>0?AGE[ageIdx].ko:"지정 안 함";
+    genLabel.textContent=gender?(gender==="man"?"남자":"여자"):"지정 안 함";}
+  ageRange.addEventListener("input",()=>{ageIdx=+ageRange.value;updateSubject();});
+  gbtns.forEach(b=>b.addEventListener("click",()=>{const g=b.dataset.g;gender=(gender===g?null:g);
+    gbtns.forEach(x=>x.setAttribute("aria-pressed",x.dataset.g===gender?"true":"false"));updateSubject();}));
 
-  // 렌즈 초점거리(단일 토큰)
-  const LENS=[null,"16mm wide-angle lens","24mm wide-angle lens","35mm lens","50mm lens","85mm portrait lens","135mm telephoto lens"];
-  const LENS_KO=["지정 안 함","16mm 광각","24mm 광각","35mm","50mm 표준","85mm 인물","135mm 망원"];
-  function setLens(){const i=+lensRange.value;lensLabel.textContent=LENS_KO[i];
-    if(lastLens){removeCompose(lastLens);lastLens=null;} if(LENS[i]){addCompose(LENS[i]);lastLens=LENS[i];} buildVocab();renderAll();}
-  lensRange.addEventListener("input",setLens);
+  // 샷 크기(8단계)
+  const SHOT=[null,
+    {en:"extreme close-up",ko:"익스트림 클로즈업",c:["macro detail","fills the frame","intense intimacy"]},
+    {en:"close-up",ko:"클로즈업",c:["face fills frame","emotional focus","shallow depth of field"]},
+    {en:"medium close-up",ko:"미디엄 클로즈업",c:["head and shoulders","conversational framing"]},
+    {en:"medium shot",ko:"미디엄 샷",c:["waist up","balanced subject and context"]},
+    {en:"medium-wide shot",ko:"미디엄 와이드",c:["mid-thigh up","body language visible","environment present"]},
+    {en:"full body shot",ko:"전신 샷",c:["head to toe","full posture","grounded in scene"]},
+    {en:"wide shot",ko:"와이드 샷",c:["subject small in frame","surrounding environment","spatial context"]},
+    {en:"establishing shot",ko:"설정 샷(익스트림 와이드)",c:["vast landscape","epic scale","tiny subject"]}
+  ];
+  shotRange.addEventListener("input",()=>setStep(shotRange,shotLabel,SHOT,"shot"));
 
-  // 카메라 높이/앵글(중앙=눈높이=토큰 없음)
-  const ANG=["worm's eye view","low angle",null,"high angle","bird's eye view"];
-  const ANG_KO=["바닥에서(앙각)","로우앵글","눈높이(기본)","하이앵글","위에서(부감)"];
-  function setAng(){const i=+angRange.value;angLabel.textContent=ANG_KO[i];
-    if(lastAng){removeCompose(lastAng);lastAng=null;} if(ANG[i]){addCompose(ANG[i]);lastAng=ANG[i];} buildVocab();renderAll();}
-  angRange.addEventListener("input",setAng);
+  // 렌즈(7단계)
+  const LENS=[null,
+    {en:"fisheye lens",ko:"어안 렌즈",c:["8mm","extreme barrel distortion","curved horizon"]},
+    {en:"ultra-wide-angle lens",ko:"초광각",c:["14-24mm","expansive field of view","deep focus"]},
+    {en:"wide-angle lens",ko:"광각",c:["35mm","environmental context","broad scene"]},
+    {en:"standard lens",ko:"표준(50mm)",c:["50mm","natural human-eye perspective","true proportions"]},
+    {en:"short telephoto lens",ko:"준망원(85mm 인물)",c:["85mm","flattering compression","creamy bokeh"]},
+    {en:"telephoto lens",ko:"망원",c:["135mm","strong compression","shallow depth of field"]},
+    {en:"super-telephoto lens",ko:"초망원",c:["300mm","extreme compression","distant subject isolation"]}
+  ];
+  lensRange.addEventListener("input",()=>setStep(lensRange,lensLabel,LENS,"lens"));
 
-  function resetControls(){lastAge=null;lastShot=null;lastLens=null;lastAng=null;
-    ageRange.value=0;shotRange.value=0;lensRange.value=0;angRange.value=2;
-    ageLabel.textContent="지정 안 함";shotLabel.textContent="지정 안 함";lensLabel.textContent="지정 안 함";angLabel.textContent="눈높이(기본)";}
+  // 카메라 높이(11단계 · 초저각 → 극항공)
+  const CAMH=[null,
+    {en:"worm's-eye view",ko:"초저각(벌레 시점)",c:["extreme low angle","looking straight up","dramatic perspective"]},
+    {en:"ground-level shot",ko:"지면 높이",c:["camera on the ground","low horizon line","immersive"]},
+    {en:"low-angle shot",ko:"로우 앵글",c:["looking up at subject","heroic","imposing"]},
+    {en:"slight low angle",ko:"살짝 아래에서",c:["subtly looking up","gentle upward tilt","empowering"]},
+    {en:"eye-level shot",ko:"아이 레벨(정면)",c:["neutral perspective","straight-on","natural"]},
+    {en:"slight high angle",ko:"살짝 위에서",c:["subtly looking down","gentle downward tilt"]},
+    {en:"high-angle shot",ko:"하이 앵글",c:["looking down at subject","vulnerable","observational"]},
+    {en:"overhead top-down shot",ko:"오버헤드(탑다운)",c:["directly above","90-degree top-down","flat-lay composition"]},
+    {en:"bird's-eye view",ko:"버드아이 뷰",c:["high overhead","map-like","expansive scene"]},
+    {en:"aerial drone shot",ko:"항공/드론 샷",c:["aerial perspective","high altitude","sweeping vista"]},
+    {en:"extreme aerial view",ko:"극항공(위성 시점)",c:["extreme high altitude","vast landscape","god's-eye view"]}
+  ];
+  camhRange.addEventListener("input",()=>setStep(camhRange,camhLabel,CAMH,"camh"));
+
+  function resetControls(){["subj","shot","lens","camh"].forEach(k=>CTRL[k]=[]);gender=null;ageIdx=0;
+    ageRange.value=0;shotRange.value=0;lensRange.value=0;camhRange.value=0;
+    gbtns.forEach(x=>x.setAttribute("aria-pressed","false"));
+    ageLabel.textContent="지정 안 함";genLabel.textContent="지정 안 함";shotLabel.textContent="지정 안 함";lensLabel.textContent="지정 안 함";camhLabel.textContent="지정 안 함";}
 
   /* 가져오기 */
   let parsed=[];
